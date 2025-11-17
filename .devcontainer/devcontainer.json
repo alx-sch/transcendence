@@ -28,6 +28,7 @@
 		"upgradePackages": true,
 		"configureGpg": false,
 		"nonFreePackages": true
-		}
+		},
+		"ghcr.io/devcontainers/features/git-lfs:1": {}
 	}
 }
