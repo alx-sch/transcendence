@@ -82,7 +82,7 @@ dev-fe:
 # Forcibly stops all dev server processes
 dev-stop:
 	@echo "$(BOLD)$(YELLOW)--- Stopping all dev processes... ---$(RESET)"
-	pkill -f "[t]s-node [s]erver.ts" || true
+	pkill -f "[s]erver.ts" || true
 	pkill -f "[v]ite" || true
 
 ############################
