@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "node --loader ts-node/esm server.ts",
+    "dev": "tsx watch server.ts",
     "start": "node dist/server.js",
     "build": "tsc"
   },
