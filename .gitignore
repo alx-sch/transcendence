@@ -1,6 +1,7 @@
 # Project-specific files to ignore
 README.md
 assets/
+node_modules/
 
 # IDE and editor configuration
 .vscode/
