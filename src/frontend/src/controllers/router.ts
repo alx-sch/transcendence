@@ -1,5 +1,6 @@
 import '../views/home-page.js';
 import '../views/pong-page.js';
+import '../views/pong3d-page.js';
 import '../views/tictactoe-page.js';
 import { UsersPage } from '../views/users-page.js';
 
@@ -29,6 +30,9 @@ export function router(): void {
       break;
     case '/pong':
       root.innerHTML = '<pong-page></pong-page>';
+      break;
+    case '/pong3d':
+      root.innerHTML = '<pong3d-page></pong3d-page>';
       break;
     default:
       root.textContent = '404';
