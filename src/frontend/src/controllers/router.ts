@@ -1,5 +1,5 @@
 import '../views/home-page.js';
-import '../views/game-page.js';
+import '../views/pong-page.js';
 import '../views/tictactoe-page.js';
 import { UsersPage } from '../views/users-page.js';
 
@@ -27,8 +27,8 @@ export function router(): void {
     case '/profile':
       root.innerHTML = "<main class='p-8'><h1>Profile</h1></main>";
       break;
-    case '/game':
-      root.innerHTML = '<game-page></game-page>';
+    case '/pong':
+      root.innerHTML = '<pong-page></pong-page>';
       break;
     default:
       root.textContent = '404';
