@@ -9,7 +9,9 @@ SERVICES_BE :=		user-service
 
 SERVICES_BE_COL :=	blue
 
-SERVICES_BE_CMD :=	$(foreach s,$(SERVICES_BE),"npm run dev --prefix $(s)")
+DEV_BE_CMD :=	$(foreach s,$(SERVICES_BE),"npm run dev --prefix $(s)")
+BUILD_BE_CMD :=	$(foreach s,$(SERVICES_BE),"npm run build --prefix $(s)")
+START_BE_CM := $(foreach s,$(SERVICES_BE),"npm run start --prefix $(s)")
 
 # Frontend services
 ##
@@ -49,17 +51,20 @@ install-fe:
 	cd ${FRONTEND_FOLDER} && npm install
 
 # Cleans all generated files (installed 'node_modules', 'dist' folders etc.)
-clean:	dev-stop
+clean: dev-stop
 	@echo "$(BOLD)$(YELLOW)--- Cleaning up project... ---$(RESET)"
-	rm -rf ${BACKEND_FOLDER}/node_modules
-	rm -rf ${BACKEND_FOLDER}/dist
-	rm -rf ${FRONTEND_FOLDER}/node_modules
-	rm -rf ${SRC_FOLDER}/dist
+	rm -rf ${BACKEND_FOLDER}/node_modules || true
+	rm -rf ${BACKEND_FOLDER}/dist || true
+	rm -rf ${FRONTEND_FOLDER}/node_modules || true
+	rm -rf ${FRONTEND_FOLDER}/dist || true
 	@for service in $(SERVICES_BE); do \
 		echo "Cleaning $$service..."; \
-		rm -rf ${BACKEND_FOLDER}/$$service/node_modules; \
+		rm -rf ${BACKEND_FOLDER}/$$service/node_modules 2>/dev/null || true; \
+		rm -rf ${BACKEND_FOLDER}/$$service/dist 2>/dev/null || true; \
 	done
+
 	@echo "$(GREEN)Project cleaned up.$(RESET)"
+
 
 # Remove all SQLite databases for all backend services
 clean-db:
@@ -110,7 +115,7 @@ dev-be:
 	cd ${BACKEND_FOLDER} && npx concurrently \
 	--names $(shell echo $(SERVICES_BE) | tr ' ' ',') \
 	--prefix-colors $(shell echo $(SERVICES_BE_COL) | tr ' ' ',') \
-	$(SERVICES_BE_CMD)
+	$(DEV_BE_CMD)
 
 # Starts the frontend Vite server
 dev-fe:
@@ -126,38 +131,69 @@ dev-stop:
 	@echo "$(BOLD)$(YELLOW)--- Stopping all dev processes... ---$(RESET)"
 	pkill -f "[s]erver.ts" || true
 	pkill -f "[v]ite" || true
+	sleep 1
 
 ############################
 ## 📦 PRODUCTION COMMANDS ##
 ############################
 
 # 1. Builds both apps for production, checks for required tools
-build:
-	@echo "$(BOLD)$(YELLOW)--- Building backend for production... ---$(RESET)"
-	@if [ ! -f "${BACKEND_FOLDER}/node_modules/.bin/ts-node" ]; then \
-		echo "$(BOLD)$(RED)Error: 'ts-node' not found.$(RESET)"; \
-		echo "Please run '$(YELLOW)make install$(RESET)' first."; \
-		exit 1; \
+build:	build-be build-fe
+
+build-be:
+	@echo "$(BOLD)$(YELLOW)--- Building Backend Microservices$(RESET)"
+	@if [ ! -f "${BACKEND_FOLDER}/node_modules/.bin/concurrently" ]; then \
+		echo "Dependencies missing — installing backend packages..."; \
+		$(MAKE) -s install-be; \
 	fi
-	cd ${BACKEND_FOLDER} && npm run build
-	@echo "$(BOLD)$(YELLOW)--- Building frontend for production... ---$(RESET)"
+	cd ${BACKEND_FOLDER} && npx concurrently \
+		--names $(shell echo $(SERVICES_BE) | tr ' ' ',') \
+		--prefix-colors $(shell echo $(SERVICES_BE_COL) | tr ' ' ',') \
+		$(BUILD_BE_CMD)
+
+build-fe:
+	@echo "$(BOLD)$(YELLOW)--- Building Frontend...$(RESET)"
 	@if [ ! -f "${FRONTEND_FOLDER}/node_modules/.bin/vite" ]; then \
-		echo "$(BOLD)$(RED)Error: 'vite' not found.$(RESET)"; \
-		echo "Please run '$(YELLOW)make install$(RESET)' first."; \
-		exit 1; \
+		echo "Dependencies missing — installing frontend packages..."; \
+		$(MAKE) -s install-fe;\
 	fi
 	cd ${FRONTEND_FOLDER} && npm run build
 
-# 2. Starts production services using Docker Compose
+# 2. Starts production services using Vite Preview
 start:
-	@echo "$(BOLD)$(YELLOW)--- Starting production services via Docker Compose... ---$(RESET)"
-	@echo "$(BOLD)$(YELLOW)📁 Creating host directories for volumes...$(RESET)"
-	mkdir -p $(VOLUME_FOLDER)/${VOLUME_CADDY_DATA}
-	mkdir -p $(VOLUME_FOLDER)/${VOLUME_CADDY_CONFIG}
-	@echo "$(DC)"
-	$(DC) up -d --build
+	@echo "$(BOLD)--- Starting Prodcution Mode... ---$(RESET)"
+	@echo "Run '$(YELLOW)make start-be$(RESET)' in one terminal (backend)."
+	@echo "Run '$(YELLOW)make start-fe$(RESET)' in a separate terminal (frontend)."
+
+start-be:
+	@echo "$(BOLD)--- Starting Backend [prod] ($(YELLOW)http://localhost:3000$(RESET)$(BOLD)) ---$(RESET)"
+	@if [  ! -f "${BACKEND_FOLDER}/node_modules/.bin/concurrently" -o ! -d "${BACKEND_FOLDER}/user-service/dist" ]; then \
+		echo "Build missing — building backend microservice..."; \
+		$(MAKE) -s build-be; \
+	fi
+	cd ${BACKEND_FOLDER} && npx concurrently \
+		--names $(shell echo $(SERVICES_BE) | tr ' ' ',') \
+		--prefix-colors $(shell echo $(SERVICES_BE_COL) | tr ' ' ',') \
+		$(START_BE_CM)
+
+start-fe:
+	@echo "$(BOLD)--- Starting Frontend [prod] ($(YELLOW)http://localhost:5173$(RESET)$(BOLD)) ---$(RESET)"
+	@if [ ! -f "${FRONTEND_FOLDER}/node_modules/.bin/vite" -o ! -d "${FRONTEND_FOLDER}/dist" ]; then \
+		echo "Build missing — building frontend..."; \
+		$(MAKE) -s build-fe; \
+	fi
+	cd ${FRONTEND_FOLDER} && npm run preview
+
+# 	@echo "$(BOLD)$(YELLOW)--- Starting production services via Docker Compose... ---$(RESET)"
+# 	@echo "$(BOLD)$(YELLOW)📁 Creating host directories for volumes...$(RESET)"
+# 	mkdir -p $(VOLUME_FOLDER)/${VOLUME_CADDY_DATA}
+# 	mkdir -p $(VOLUME_FOLDER)/${VOLUME_CADDY_CONFIG}
+# 	@echo "$(DC)"
+# 	$(DC) up -d --build
 
 # 3. Stops production services
-stop:
-	@echo "$(BOLD)$(GREEN)--- Stopping production services... ---$(RESET)"
-	$(DC) down
+# stop:
+# 	@echo "$(BOLD)$(GREEN)--- Stopping production services... ---$(RESET)"
+# 	$(DC) down
+
+.PHONY: clean

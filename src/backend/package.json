@@ -3,9 +3,6 @@
   "type": "module",
   "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "dev:all": "concurrently \"$(SERVICES_BE_CMD)\""
-  },
   "devDependencies": {
     "concurrently": "^8.2.2",
     "pino": "^10.1.0",

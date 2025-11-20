@@ -5,9 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development tsx watch server.ts",
-    "start": "node dist/server.js",
-    "build": "tsc"
+    "dev": "NODE_ENV=development tsx watch src/server.ts",
+    "build": "tsc",
+    "postbuild": "cp -r db dist/db",
+    "start": "NODE_ENV=production node dist/user-service/src/server.js"
   },
   "keywords": [],
   "author": "",
