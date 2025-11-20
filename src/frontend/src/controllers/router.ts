@@ -1,37 +1,41 @@
-import "../views/home-page.js";
-import "../views/game-page.js"
-import { UsersPage } from "../views/users-page.js";
+import '../views/home-page.js';
+import '../views/game-page.js';
+import '../views/tictactoe-page.js';
+import { UsersPage } from '../views/users-page.js';
 
 export function router(): void {
-  const root = document.getElementById("app");
+  const root = document.getElementById('app');
 
   if (!root) {
-    console.error("Router error: #app not found");
+    console.error('Router error: #app not found');
     return;
   }
 
-  root.innerHTML = ""; // clear previous view
+  root.innerHTML = ''; // clear previous view
 
   switch (location.pathname) {
-    case "/":
-    case "/home":
-      root.innerHTML = "<home-page></home-page>";
+    case '/':
+    case '/home':
+      root.innerHTML = '<home-page></home-page>';
       break;
-    case "/users":
+    case '/tictactoe':
+      root.innerHTML = '<tictactoe-page></tictactoe-page>';
+      break;
+    case '/users':
       root.append(UsersPage());
       break;
-    case "/profile":
-      root.innerHTML = "<h1>Profile</h1>";
+    case '/profile':
+      root.innerHTML = "<main class='p-8'><h1>Profile</h1></main>";
       break;
-    case "/game":
-      root.innerHTML = "<game-page></game-page>";
-    break;
+    case '/game':
+      root.innerHTML = '<game-page></game-page>';
+      break;
     default:
-      root.textContent = "404";
+      root.textContent = '404';
   }
 }
 
 export function navigate(to: string): void {
-  history.pushState({}, "", to);
-  window.dispatchEvent(new PopStateEvent("popstate"));
+  history.pushState({}, '', to);
+  window.dispatchEvent(new PopStateEvent('popstate'));
 }
