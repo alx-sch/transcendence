@@ -38,7 +38,9 @@ if (fs.existsSync(schemaPath)) {
 }
 
 // Seed demo users only if table is empty
-const userCount = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
+const retObj = db.prepare('SELECT COUNT(*) AS count FROM users').get() as { count : number};
+const userCount = retObj.count;
+
 if (userCount === 0) {
   const seedPath = path.join(dbDir, 'seed.sql');
   if (fs.existsSync(seedPath)) {
