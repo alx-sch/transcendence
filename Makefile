@@ -1,14 +1,25 @@
 NAME :=				ft_transcendence
 
-# If env file exists, include (into Makefile) and export (into shell) variables
+SRC_FOLDER :=		src
+BACKEND_FOLDER :=	$(SRC_FOLDER)/backend
+FRONTEND_FOLDER :=	$(SRC_FOLDER)/frontend
+
+# Backend services
+SERVICES_BE :=		user-service
+
+SERVICES_BE_COL :=	blue
+
+SERVICES_BE_CMD :=	$(foreach s,$(SERVICES_BE),"npm run dev --prefix $(s)")
+
+# Frontend services
+##
+
+# Docker Compose
 DEPL_PATH :=		deployment
 ENV_FILE :=			${DEPL_PATH}/.env
 DOCKER_COMP_FILE :=	${DEPL_PATH}/docker-compose.prod.yaml
 
-ifneq ($(wildcard $(ENV_FILE)),)
-	include $(ENV_FILE)
-	export $(shell sed 's/=.*//' $(ENV_FILE) | xargs)
-endif
+DC = docker compose -f $(DOCKER_COMP_FILE) --env-file $(ENV_FILE)
 
 # Formatting
 RESET =				\033[0m
@@ -17,27 +28,53 @@ GREEN =				\033[32m
 YELLOW =			\033[33m
 RED :=				\033[91m
 
-# Base docker-compose command
-DC = docker compose -f $(DOCKER_COMP_FILE) --env-file $(ENV_FILE)
-
 #########################
 ## 🛠️ UTILITY COMMANDS ##
 #########################
 
 # Installs all dependencies for frontend and backend
-install:
-	@echo "$(BOLD)$(YELLOW)--- Installing backend dependencies... ---$(RESET)"
-	cd ${BACKEND_FOLDER} && npm install -g npm@11.6.2 -D tsx
-	@echo "$(BOLD)$(YELLOW)\n--- Installing frontend dependencies... ---$(RESET)"
-	cd ${FRONTEND_FOLDER} && npm install -g npm@11.6.2 -D tsx
+install:	install-be install-fe
 
-# Cleans the entire project (removes node_modules and build artifacts)
+install-be:
+	@echo "$(BOLD)$(YELLOW)--- Installing backend dependencies... ---$(RESET)"
+	@echo "$(YELLOW)Installing concurrently in backend root...$(RESET)"
+	cd ${BACKEND_FOLDER} && npm install --no-save concurrently
+	@for service in $(SERVICES_BE); do \
+		echo "$(YELLOW)Installing $$service$(RESET)..."; \
+		cd ${BACKEND_FOLDER}/$$service && npm install; \
+	done
+
+install-fe:
+	@echo "$(BOLD)$(YELLOW)\n--- Installing frontend dependencies... ---$(RESET)"
+	cd ${FRONTEND_FOLDER} && npm install
+
+# Cleans all generated files (installed 'node_modules', 'dist' folders etc.)
 clean:	dev-stop
 	@echo "$(BOLD)$(YELLOW)--- Cleaning up project... ---$(RESET)"
 	rm -rf ${BACKEND_FOLDER}/node_modules
 	rm -rf ${BACKEND_FOLDER}/dist
 	rm -rf ${FRONTEND_FOLDER}/node_modules
 	rm -rf ${SRC_FOLDER}/dist
+	@for service in $(SERVICES_BE); do \
+		echo "Cleaning $$service..."; \
+		rm -rf ${BACKEND_FOLDER}/$$service/node_modules; \
+	done
+	@echo "$(GREEN)Project cleaned up.$(RESET)"
+
+# Remove all SQLite databases for all backend services
+clean-db:
+	@echo "$(BOLD)$(RED)--- Deleting all backend SQLite databases... ---$(RESET)"
+	@for service in $(SERVICES_BE); do \
+		DB_DIR="${BACKEND_FOLDER}/$$service/db"; \
+		if [ -d $$DB_DIR ]; then \
+			echo "Deleting databases in $$service..."; \
+			rm -f $$DB_DIR/*.sqlite $$DB_DIR/*.sqlite-wal $$DB_DIR/*.sqlite-shm; \
+		else \
+			echo "No DB directory found for $$service"; \
+		fi \
+	done
+	@echo "$(GREEN)All databases deleted.$(RESET)"
+
 
 # Stop all running containers and remove all Docker resources system-wide
 # Uses a temp container to delete persistent volume data (to avoid permission issues on rootless hosts)
@@ -49,7 +86,7 @@ purge:
 	@docker run --rm -v $$(pwd):/clean -w /clean alpine rm -rf $(VOLUME_FOLDER)
 	
 	@echo "$(BOLD)$(RED)🔥 Removing ALL unused Docker resources (containers, images, volumes)...$(RESET)"
-	@docker system prune -af -a --volumes
+	@docker system prune -af --volumes
 	@docker system df
 	@echo "$(BOLD)$(RED)🗑️  All Docker resources have been purged.$(RESET)"
 
@@ -66,20 +103,21 @@ dev:
 # Starts the backend API server
 dev-be:
 	@echo "$(BOLD)--- Starting Backend [dev] ($(YELLOW)http://localhost:3000$(RESET)$(BOLD)) ---$(RESET)"
-	@if [ ! -f "${BACKEND_FOLDER}/node_modules/.bin/ts-node" ]; then \
-		echo "$(BOLD)$(RED)Error: 'ts-node' not found.$(RESET)"; \
-		echo "Please run '$(YELLOW)make install$(RESET)' first."; \
-		exit 1; \
+	@if [ ! -f "${BACKEND_FOLDER}/node_modules/.bin/concurrently" ]; then \
+		echo "Dependencies missing — installing backend packages..."; \
+		$(MAKE) -s install-be;\
 	fi
-	cd ${BACKEND_FOLDER} && npm run dev
+	cd ${BACKEND_FOLDER} && npx concurrently \
+	--names $(shell echo $(SERVICES_BE) | tr ' ' ',') \
+	--prefix-colors $(shell echo $(SERVICES_BE_COL) | tr ' ' ',') \
+	$(SERVICES_BE_CMD)
 
 # Starts the frontend Vite server
 dev-fe:
 	@echo "$(BOLD)--- Starting Frontend [dev] ($(YELLOW)http://localhost:5173$(RESET)$(BOLD)) ---$(RESET)"
 	@if [ ! -f "${FRONTEND_FOLDER}/node_modules/.bin/vite" ]; then \
-		echo "$(BOLD)$(RED)Error: 'vite' not found.$(RESET)"; \
-		echo "Please run '$(YELLOW)make install$(RESET)' first."; \
-		exit 1; \
+		echo "Dependencies missing — installing frontend packages..."; \
+		$(MAKE) -s install-fe;\
 	fi
 	cd ${FRONTEND_FOLDER} && npm run dev
 

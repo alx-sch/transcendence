@@ -1,28 +1,28 @@
 {
-	"name": "Full Stack -- Trancendence",
+  "name": "Full Stack -- Trancendence",
 
-	// Debian OS with Node.js/Type 20
-	"image": "mcr.microsoft.com/devcontainers/javascript-node:20-bookworm",
+  // Debian OS with Node.js/Type 20
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20-bookworm",
 
-	"features": {
-		// This feature installs Docker inside the Codespace,
-		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
-	},
+  "features": {
+    // This feature installs Docker inside the Codespace,
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
 
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"dbaeumer.vscode-eslint",		// For TypeScript linting
-				"esbenp.prettier-vscode",		// For code formatting
-				"bradlc.vscode-tailwindcss",	// For Tailwind CSS
-				"ms-azuretools.vscode-docker"	// To manage your container
-			]
-		}
-	},
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint", // For TypeScript linting
+        "esbenp.prettier-vscode", // For code formatting
+        "bradlc.vscode-tailwindcss", // For Tailwind CSS
+        "ms-azuretools.vscode-docker" // To manage your container
+      ]
+    }
+  },
 
-	// 3000: Backend API
-	// 5173: The default Vite frontend port
-	"forwardPorts": [3000, 5173],
+  // 3000: Backend API
+  // 5173: The default Vite frontend port
+  "forwardPorts": [3000, 5173]
 
-	//"postCreateCommand": "sudo npm install -g npm@11.6.2 && sudo npm install -D tsx"
+  //"postCreateCommand": "sudo npm install -g npm@11.6.2 && sudo npm install -D tsx"
 }
