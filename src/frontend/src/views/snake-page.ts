@@ -3,7 +3,7 @@ import {
   Engine,
   Scene,
   Vector3,
-  FreeCamera,
+  ArcRotateCamera,
   HemisphericLight,
   PointLight,
   MeshBuilder,
@@ -42,14 +42,16 @@ export class SnakePage extends Component {
         </h1>
         
         <div style="position: relative; width: 1000px; height: 600px; border: 4px solid #333; box-shadow: 0 0 30px rgba(0,0,0,0.9);">
-            <canvas id="renderCanvas" style="width: 100%; height: 100%; outline: none; cursor: none;"></canvas>
-            <div id="deathMsg" class="absolute top-1/2 left-0 w-full text-center text-red-500 font-bold text-6xl hidden" style="text-shadow: 0 0 20px red; transform: translateY(-50%);">
+            <canvas id="renderCanvas" style="width: 100%; height: 100%; outline: none; cursor: grab;"></canvas>
+            
+            <div id="deathMsg" class="absolute top-1/2 left-0 w-full text-center text-red-500 font-bold text-6xl hidden" style="text-shadow: 0 0 20px red; transform: translateY(-50%); pointer-events: none;">
                 CRASHED!
             </div>
         </div>
         
-        <p class="text-gray-400 mt-4">
-           <b>Left/Right</b> to turn. The border is the teleport line.
+        <p class="text-gray-400 mt-4 text-center">
+           <b>Arrow Keys</b> to turn.<br>
+           <b>Mouse Drag</b> to rotate view. <b>Scroll</b> to zoom.
         </p>
       </section>
     `;
@@ -104,14 +106,30 @@ export class SnakePage extends Component {
     const gl = new GlowLayer('glow', this.scene);
     gl.intensity = 0.7;
 
-    // 2. CAMERA (UPDATED)
-    // Moved Y up to 75 (Zoom out) and Z back to -40 to fit the whole board
-    const camera = new FreeCamera(
+    // 2. CAMERA (ArcRotateCamera for Mouse Control)
+    // Parameters: Name, Alpha, Beta, Radius, Target, Scene
+    const camera = new ArcRotateCamera(
       'camera1',
-      new Vector3(0, 50, -22),
+      -Math.PI / 2, // Face "North"
+      0.6,
+      65, // Distance from center
+      new Vector3(0, 0, 0),
       this.scene
     );
-    camera.setTarget(new Vector3(0, 0, -3));
+
+    // Attach controls so mouse works
+    camera.attachControl(this.canvas, true);
+
+    // Disable Keys (We want Arrow Keys for Snake, NOT Camera)
+    camera.keysUp = [];
+    camera.keysDown = [];
+    camera.keysLeft = [];
+    camera.keysRight = [];
+
+    // Limits to keep camera sane
+    camera.lowerRadiusLimit = 20;
+    camera.upperRadiusLimit = 150;
+    camera.lowerBetaLimit = 0.1;
 
     // 3. LIGHTING
     const light = new HemisphericLight(
@@ -121,7 +139,7 @@ export class SnakePage extends Component {
     );
     light.intensity = 0.6;
 
-    // 4. GROUND
+    // 4. GROUND (Wireframe Grid)
     const ground = MeshBuilder.CreateGround(
       'ground',
       {
@@ -180,7 +198,7 @@ export class SnakePage extends Component {
     matHead.emissiveColor = new Color3(1, 1, 1);
     this.head.material = matHead;
 
-    // Dynamic Light
+    // Dynamic Light on Head
     this.headLight = new PointLight(
       'headLight',
       new Vector3(0, 2, 0),
@@ -243,6 +261,7 @@ export class SnakePage extends Component {
     }
 
     // 4. Collision Check
+    // Safe Zone: Don't check the last 15 segments (the tail right behind you)
     const safeZone = 15;
     const limit = this.allTrails.length - safeZone;
 
@@ -262,7 +281,7 @@ export class SnakePage extends Component {
         {
           path: [this.lastPosition, this.head.position],
           radius: 0.4,
-          tessellation: 4,
+          tessellation: 4, // Low detail square tube is faster
           cap: 0,
           updatable: false,
         },
