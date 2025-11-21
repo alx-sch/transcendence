@@ -2,14 +2,17 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
+import formbody from '@fastify/formbody';
 import Database from 'better-sqlite3';
 import { info, warn, error, debug } from '../logger.js';
+import { createHandlers } from './handlers.js';
 
 // __filename and __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const fastify = Fastify({ logger: true });
+fastify.register(formbody);
 const dbDir = path.join(__dirname, 'db');
 const dbFile = path.join(dbDir, 'app.sqlite');
 
@@ -18,7 +21,7 @@ const isDev = process.env.NODE_ENV !== 'production';
 // Delete old dev database if in dev-mode
 if (isDev && fs.existsSync(dbFile)) {
   fs.unlinkSync(dbFile);
-  info('Old dev database deleted.');
+  info('Old dev database deleted.');  
 }
 
 // Open database (creates file if missing)
@@ -55,14 +58,14 @@ if (userCount === 0) {
 }
 
 // Routes
-fastify.get('/users', (request, reply) => {
-  const users = db.prepare('SELECT * FROM users').all();
-  return users;
-});
-
+const { registerHandler, userHandler } = createHandlers(db);
 fastify.get('/', (request, reply) => {
   return { hello: 'world' };
 });
+fastify.post('/api/register', registerHandler);
+fastify.post('/register', registerHandler);
+fastify.get('/api/users', userHandler);
+fastify.get('/users', userHandler);
 
 // Start the server
 const start = async () => {

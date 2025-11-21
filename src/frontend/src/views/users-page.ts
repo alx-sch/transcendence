@@ -4,12 +4,12 @@ export function UsersPage() {
 
   fetch("/api/users")
     .then((res) => res.json())
-    .then((data: { id: number; name: string; email: string }[]) => {
+    .then((data: { id: number; username: string; email: string }[]) => {
       root.innerHTML = `
         <main class="p-8">
           <h1>Users</h1>
           <ul>
-            ${data.map((el) => `<li>${el.name} – ${el.email}</li>`).join("")}
+            ${data.map((el) => `<li>${el.username} – ${el.email}</li>`).join("")}
           </ul>
         </main>
       `;

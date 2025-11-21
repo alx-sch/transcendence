@@ -1,0 +1,44 @@
+import bcrypt from 'bcryptjs';
+import { info, warn, error, debug } from '../logger.js';
+
+export function createHandlers(db: any) {
+  const userHandler = async (request: any, reply: any) => {
+    const rows = db.prepare('SELECT id, username, email FROM users').all();
+    return rows;
+  };
+
+  const registerHandler = async (request: any, reply: any) => {
+    try {
+      const body = (request.body as any) ?? {};
+      const { username, email, password } = body;
+
+      if (!username || !email || !password || password.length < 8) {
+        return reply.status(400).send({ error: 'Invalid input: username, email and password(>=8) required' });
+      }
+
+        const existingUsername = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+        if (existingUsername) {
+          return reply.status(409).send({ error: 'Username already in use' });
+        }
+
+        const existingEmail = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+        if (existingEmail) {
+          return reply.status(409).send({ error: 'Email already registered' });
+        }
+
+      const passwordHash = bcrypt.hashSync(password, 12);
+
+      const insert = db.prepare('INSERT INTO users (username, email, passwordHash) VALUES (?, ?, ?)');
+      const runResult = insert.run(username, email, passwordHash);
+      const id = runResult.lastInsertRowid;
+
+      return reply.status(201).send({ id, username, email });
+    } catch (err) {
+      const payload = err instanceof Error ? { message: err.message, stack: err.stack } : { value: String(err) };
+      error('register error', payload);
+      return reply.status(500).send({ error: 'Server error' });
+    }
+  };
+
+  return { registerHandler, userHandler };
+}

@@ -3,6 +3,7 @@ import '../views/pong-page.js';
 import '../views/pong3d-page.js';
 import '../views/tictactoe-page.js';
 import '../views/snake-page.js';
+import '../views/register-page.js';
 import { UsersPage } from '../views/users-page.js';
 
 export function router(): void {
@@ -25,6 +26,9 @@ export function router(): void {
       break;
     case '/users':
       root.append(UsersPage());
+      break;
+    case '/register':
+      root.innerHTML = '<register-page></register-page>';
       break;
     case '/profile':
       root.innerHTML = "<main class='p-8'><h1>Profile</h1></main>";
