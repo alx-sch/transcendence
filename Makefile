@@ -7,14 +7,11 @@ FRONTEND_FOLDER :=	$(SRC_FOLDER)/frontend
 # Backend services
 SERVICES_BE :=		user-service
 
-SERVICES_BE_COL :=	blue
+SERVICES_BE_CLR :=	blue
 
 DEV_BE_CMD :=	$(foreach s,$(SERVICES_BE),"npm run dev --prefix $(s)")
 BUILD_BE_CMD :=	$(foreach s,$(SERVICES_BE),"npm run build --prefix $(s)")
 START_BE_CM := $(foreach s,$(SERVICES_BE),"npm run start --prefix $(s)")
-
-# Frontend services
-##
 
 # Docker Compose
 DEPL_PATH :=		deployment
@@ -55,7 +52,7 @@ install-fe:
 
 # Cleans all generated files (installed 'node_modules', 'dist' folders etc.)
 clean: dev-stop
-	@echo "$(BOLD)$(YELLOW)--- Cleaning up project... ---$(RESET)"
+	@echo "$(BOLD)$(YELLOW)--- Cleaning up project...$(RESET)"
 	rm -rf ${BACKEND_FOLDER}/node_modules || true
 	rm -rf ${BACKEND_FOLDER}/dist || true
 	rm -rf ${FRONTEND_FOLDER}/node_modules || true
@@ -65,9 +62,7 @@ clean: dev-stop
 		rm -rf ${BACKEND_FOLDER}/$$service/node_modules 2>/dev/null || true; \
 		rm -rf ${BACKEND_FOLDER}/$$service/dist 2>/dev/null || true; \
 	done
-
-	@echo "$(GREEN)Project cleaned up.$(RESET)"
-
+	@echo "$(BOLD)$(GREEN)Project cleaned up.$(RESET)"
 
 # Remove all SQLite databases for all backend services
 clean-db:
@@ -83,10 +78,9 @@ clean-db:
 	done
 	@echo "$(GREEN)$(BOLD)All databases deleted.$(RESET)"
 
-
-# Stop all running containers and remove all Docker resources system-wide
+# 'clean' + 'clean-db' + stops all running containers and remove all Docker resources system-wide
 # Uses a temp container to delete persistent volume data (to avoid permission issues on rootless hosts)
-purge:
+purge:	clean clean-db
 	@echo "$(BOLD)$(RED)☢️  SYSTEM-WIDE PURGE: Stopping ALL running Docker containers...$(RESET)"
 	@docker stop $$(docker ps -aq) 2>/dev/null || true
 	
@@ -96,7 +90,7 @@ purge:
 	@echo "$(BOLD)$(RED)🔥 Removing ALL unused Docker resources (containers, images, volumes)...$(RESET)"
 	@docker system prune -af --volumes
 	@docker system df
-	@echo "$(BOLD)$(RED)🗑️  All Docker resources have been purged.$(RESET)"
+	@echo "$(BOLD)$(GREEN)🗑️  All Docker resources have been purged.$(RESET)"
 
 #############################
 ## 🚀 DEVELOPMENT COMMANDS ##
@@ -104,25 +98,25 @@ purge:
 
 # Main 'dev' command. Requires two separate terminals.
 dev:
-	@echo "$(BOLD)--- Starting Development Mode... ---$(RESET)"
+	@echo "$(BOLD)$(YELLOW)--- Starting Development Mode...$(RESET)"
 	@echo "Run '$(YELLOW)make dev-be$(RESET)' in one terminal (backend)."
 	@echo "Run '$(YELLOW)make dev-fe$(RESET)' in a separate terminal (frontend)."
 
 # Starts the backend API server
 dev-be:
-	@echo "$(BOLD)$(YELLOW)--- Starting Backend [dev] ($(BLUE)http://localhost:3000$(RESET)$(BOLD)$(YELLOW))$(RESET)"
+	@echo "$(BOLD)$(YELLOW)--- Starting Backend [dev] ($(BLUE)http://localhost:3000$(RESET)$(BOLD)$(YELLOW))...$(RESET)"
 	@if [ ! -f "${BACKEND_FOLDER}/node_modules/.bin/concurrently" ]; then \
 		echo "Dependencies missing — installing backend packages..."; \
 		$(MAKE) -s install-be;\
 	fi
 	cd ${BACKEND_FOLDER} && npx concurrently \
 	--names $(shell echo $(SERVICES_BE) | tr ' ' ',') \
-	--prefix-colors $(shell echo $(SERVICES_BE_COL) | tr ' ' ',') \
+	--prefix-colors $(shell echo $(SERVICES_BE_CLR) | tr ' ' ',') \
 	$(DEV_BE_CMD)
 
 # Starts the frontend Vite server
 dev-fe:
-	@echo "$(BOLD)$(YELLOW)--- Starting Frontend [dev] ($(BLUE)http://localhost:5173$(RESET)$(BOLD)$(YELLOW))$(RESET)"
+	@echo "$(BOLD)$(YELLOW)--- Starting Frontend [dev] ($(BLUE)http://localhost:5173$(RESET)$(BOLD)$(YELLOW))...$(RESET)"
 	@if [ ! -f "${FRONTEND_FOLDER}/node_modules/.bin/vite" ]; then \
 		echo "Dependencies missing — installing frontend packages..."; \
 		$(MAKE) -s install-fe;\
@@ -135,6 +129,7 @@ dev-stop:
 	pkill -f "[s]erver.ts" || true
 	pkill -f "[v]ite" || true
 	sleep 1
+	@echo "$(BOLD)$(GREEN)All dev processes stopped.$(RESET)"
 
 ############################
 ## 📦 PRODUCTION COMMANDS ##
@@ -144,14 +139,14 @@ dev-stop:
 build:	build-be build-fe
 
 build-be:
-	@echo "$(BOLD)$(YELLOW)--- Building Backend Microservices$(RESET)"
+	@echo "$(BOLD)$(YELLOW)--- Building Backend Microservices...$(RESET)"
 	@if [ ! -f "${BACKEND_FOLDER}/node_modules/.bin/concurrently" ]; then \
 		echo "Dependencies missing — installing backend packages..."; \
 		$(MAKE) -s install-be; \
 	fi
 	cd ${BACKEND_FOLDER} && npx concurrently \
 		--names $(shell echo $(SERVICES_BE) | tr ' ' ',') \
-		--prefix-colors $(shell echo $(SERVICES_BE_COL) | tr ' ' ',') \
+		--prefix-colors $(shell echo $(SERVICES_BE_CLR) | tr ' ' ',') \
 		$(BUILD_BE_CMD)
 
 build-fe:
@@ -164,23 +159,23 @@ build-fe:
 
 # 2. Starts production services using Vite Preview
 start:
-	@echo "$(BOLD)--- Starting Prodcution Mode... ---$(RESET)"
+	@echo "$(BOLD)$(YELLOW)--- Starting Prodcution Mode...$(RESET)"
 	@echo "Run '$(YELLOW)make start-be$(RESET)' in one terminal (backend)."
 	@echo "Run '$(YELLOW)make start-fe$(RESET)' in a separate terminal (frontend)."
 
 start-be:
-	@echo "$(BOLD)--- Starting Backend [prod] ($(YELLOW)http://localhost:3000$(RESET)$(BOLD)) ---$(RESET)"
+	@echo "$(BOLD)$(YELLOW)--- Starting Backend [prod] ($(BLUE)http://localhost:3000$(RESET)$(BOLD)$(YELLOW))...-$(RESET)"
 	@if [  ! -f "${BACKEND_FOLDER}/node_modules/.bin/concurrently" -o ! -d "${BACKEND_FOLDER}/user-service/dist" ]; then \
 		echo "Build missing — building backend microservice..."; \
 		$(MAKE) -s build-be; \
 	fi
 	cd ${BACKEND_FOLDER} && npx concurrently \
 		--names $(shell echo $(SERVICES_BE) | tr ' ' ',') \
-		--prefix-colors $(shell echo $(SERVICES_BE_COL) | tr ' ' ',') \
+		--prefix-colors $(shell echo $(SERVICES_BE_CLR) | tr ' ' ',') \
 		$(START_BE_CM)
 
 start-fe:
-	@echo "$(BOLD)--- Starting Frontend [prod] ($(YELLOW)http://localhost:5173$(RESET)$(BOLD)) ---$(RESET)"
+	@echo "$(BOLD)$(YELLOW)--- Starting Frontend [prod] ($(BLUE)http://localhost:5173$(RESET)$(BOLD)$(YELLOW))...$(RESET)"
 	@if [ ! -f "${FRONTEND_FOLDER}/node_modules/.bin/vite" -o ! -d "${FRONTEND_FOLDER}/dist" ]; then \
 		echo "Build missing — building frontend..."; \
 		$(MAKE) -s build-fe; \
@@ -199,4 +194,8 @@ start-fe:
 # 	@echo "$(BOLD)$(GREEN)--- Stopping production services... ---$(RESET)"
 # 	$(DC) down
 
-.PHONY: clean
+.PHONY:	install install-be install-fe \
+		clean clean-db purge \
+		dev dev-be dev-fe dev-stop \
+		build build-be build-fe \
+		start start-be start-fe
