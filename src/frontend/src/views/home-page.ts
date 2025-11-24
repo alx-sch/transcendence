@@ -1,4 +1,4 @@
-import { Component } from "../core/Component.js";
+import { Component } from '../core/Component.js';
 
 export class HomePage extends Component {
   render(): string {
@@ -14,4 +14,4 @@ export class HomePage extends Component {
   }
 }
 
-customElements.define("home-page", HomePage);
+customElements.define('home-page', HomePage);

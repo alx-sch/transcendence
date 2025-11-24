@@ -1,4 +1,4 @@
-import { Component } from "../core/Component.js";
+import { Component } from '../core/Component.js';
 
 export class TicTacToe extends Component {
   render(): string {
@@ -27,8 +27,8 @@ export class TicTacToe extends Component {
   }
 
   initGame() {
-    const cells = this.querySelectorAll(".cell");
-    let currentPlayer = "X";
+    const cells = this.querySelectorAll('.cell');
+    let currentPlayer = 'X';
     let winner: string | null = null;
 
     const checkWinner = () => {
@@ -43,24 +43,24 @@ export class TicTacToe extends Component {
         [6, 7, 8],
       ];
       patterns.forEach((p) => {
-        if (cells[p[0]].textContent !== "" && cells[p[0]].textContent === cells[p[1]].textContent && cells[p[0]].textContent === cells[p[2]].textContent) {
+        if (cells[p[0]].textContent !== '' && cells[p[0]].textContent === cells[p[1]].textContent && cells[p[0]].textContent === cells[p[2]].textContent) {
           winner = cells[p[0]].textContent;
-          this.querySelector("#winner")!.textContent = `${winner} wins!`;
+          this.querySelector('#winner')!.textContent = `${winner} wins!`;
         }
       });
     };
 
     cells.forEach((cell) => {
-      cell.addEventListener("click", () => {
+      cell.addEventListener('click', () => {
         if (winner) return;
-        if (cell.textContent !== "") return;
+        if (cell.textContent !== '') return;
 
         cell.textContent = currentPlayer;
-        currentPlayer = currentPlayer === "X" ? "O" : "X";
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
         checkWinner();
       });
     });
   }
 }
 
-customElements.define("tictactoe-page", TicTacToe);
+customElements.define('tictactoe-page', TicTacToe);
