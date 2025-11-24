@@ -10,7 +10,6 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "noEmit": true, // Because we are using vite
-    "noEmitOnError": true,
     "skipLibCheck": true
   }
 }
