@@ -12,9 +12,7 @@ const fastify = Fastify({ logger: true });
 
 const isDev = process.env.NODE_ENV !== 'production';
 
-const dbDir = isDev
-  ? path.join(__dirname, '..', 'db')
-  : path.join(__dirname, '..', '..', 'db'); // dist/db
+const dbDir = isDev ? path.join(__dirname, '..', 'db') : path.join(__dirname, '..', '..', 'db'); // dist/db
 const dbFile = path.join(dbDir, 'app.sqlite');
 
 // Delete old dev database if in dev-mode

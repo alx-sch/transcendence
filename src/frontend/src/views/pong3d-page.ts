@@ -1,15 +1,5 @@
 import { Component } from '../core/Component.js'; // Your base class
-import {
-  Engine,
-  Scene,
-  Vector3,
-  FreeCamera,
-  HemisphericLight,
-  MeshBuilder,
-  StandardMaterial,
-  Color3,
-  Mesh,
-} from '@babylonjs/core';
+import { Engine, Scene, Vector3, FreeCamera, HemisphericLight, MeshBuilder, StandardMaterial, Color3, Mesh } from '@babylonjs/core';
 
 export class PongPage3d extends Component {
   private canvas: HTMLCanvasElement | null = null;
@@ -80,19 +70,11 @@ export class PongPage3d extends Component {
 
     // --- A. Camera ---
     // Place camera above looking down at an angle (Spectator view)
-    const camera = new FreeCamera(
-      'camera1',
-      new Vector3(0, 15, -20),
-      this.scene
-    );
+    const camera = new FreeCamera('camera1', new Vector3(0, 15, -20), this.scene);
     camera.setTarget(Vector3.Zero()); // Look at center of table
 
     // --- B. Light ---
-    const light = new HemisphericLight(
-      'light1',
-      new Vector3(0, 1, 0),
-      this.scene
-    );
+    const light = new HemisphericLight('light1', new Vector3(0, 1, 0), this.scene);
     light.intensity = 0.7;
 
     // --- C. Materials ---
@@ -119,21 +101,13 @@ export class PongPage3d extends Component {
     ground.material = matWhite;
 
     // 2. Player Paddle (Left / -X)
-    this.player = MeshBuilder.CreateBox(
-      'player',
-      { height: 1, width: 1, depth: 3 },
-      this.scene
-    );
+    this.player = MeshBuilder.CreateBox('player', { height: 1, width: 1, depth: 3 }, this.scene);
     this.player.position.x = -9;
     this.player.position.y = 0.5; // Sit on top of ground
     this.player.material = matRed;
 
     // 3. AI Paddle (Right / +X)
-    this.ai = MeshBuilder.CreateBox(
-      'ai',
-      { height: 1, width: 1, depth: 3 },
-      this.scene
-    );
+    this.ai = MeshBuilder.CreateBox('ai', { height: 1, width: 1, depth: 3 }, this.scene);
     this.ai.position.x = 9;
     this.ai.position.y = 0.5;
     this.ai.material = matBlue;
@@ -149,10 +123,7 @@ export class PongPage3d extends Component {
       if (!this.scene) return;
 
       // Map Mouse Y (0 to Canvas Height) to Table Z (-7 to 7)
-      const pickResult = this.scene.pick(
-        this.scene.pointerX,
-        this.scene.pointerY
-      );
+      const pickResult = this.scene.pick(this.scene.pointerX, this.scene.pointerY);
 
       // We create an invisible plane to catch mouse movements exactly on the board level
       // For MVP, let's just map screen coordinates roughly
@@ -201,11 +172,7 @@ export class PongPage3d extends Component {
 
     // 5. AI Logic (Simple tracking)
     // Move AI paddle towards ball Z, with a speed limit (lerp)
-    this.ai.position.z = Scalar.Lerp(
-      this.ai.position.z,
-      this.ball.position.z,
-      0.05
-    );
+    this.ai.position.z = Scalar.Lerp(this.ai.position.z, this.ball.position.z, 0.05);
     // Clamp AI position
     this.ai.position.z = Math.max(-6, Math.min(6, this.ai.position.z));
   }
@@ -217,11 +184,7 @@ export class PongPage3d extends Component {
   private resetBall(direction: number) {
     if (!this.ball) return;
     this.ball.position = new Vector3(0, 0.4, 0);
-    this.ballVelocity = new Vector3(
-      0.2 * direction,
-      0,
-      (Math.random() - 0.5) * 0.2
-    );
+    this.ballVelocity = new Vector3(0.2 * direction, 0, (Math.random() - 0.5) * 0.2);
     this.updateScoreBoard();
   }
 
