@@ -1,0 +1,14 @@
+localhost {
+
+	# API Procs
+	handle_path /api/* {
+		reverse_proxy localhost:3000
+	}
+
+	# Needs to be wrapped in handle block, otherwise Caddy will change the order of execution and the proxy is not applied
+	handle {
+		root * src/frontend/dist
+		try_files {path} /index.html
+		file_server
+	}
+}
