@@ -13,7 +13,7 @@ export class PongPage extends Component {
   private com = { x: 790, y: 250, score: 0, color: 'white' };
 
   render(): string {
-    return ` 
+    return `
         <section class="game-container" style="display:flex; flex-direction:column; align-items:center;">
         <h1 class="text-2xl font-bold mb-4">Pong</h1>
         <canvas id="pongCanvas" width="800" height="600" style="background: #000; border: 2px solid #fff;"></canvas>
