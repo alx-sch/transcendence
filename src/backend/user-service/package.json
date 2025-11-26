@@ -1,26 +1,22 @@
 {
-  "name": "backend",
+  "name": "user-service",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Handles user identity, profiles, and data persistence.",
   "type": "module",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch src/server.ts",
     "build": "tsc",
     "postbuild": "cp -r db dist/db",
-    "start": "NODE_ENV=production node dist/user-service/src/server.js"
+    "start": "NODE_ENV=production node dist/server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "better-sqlite3": "^12.4.1",
-    "fastify": "^5.6.2"
+    "fastify": "^5.6.2",
+    "@transcendence/utils": "*"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.10.1",
-    "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }

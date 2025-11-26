@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
 import Database from 'better-sqlite3';
-import { info, warn, error, debug } from '../../utils/logger.js';
+import { info, warn, error } from '@transcendence/utils';
 
 // __filename and __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -12,9 +12,8 @@ const fastify = Fastify({ logger: true });
 
 const isDev = process.env.NODE_ENV !== 'production';
 
-const dbDir = isDev
-  ? path.join(__dirname, '..', 'db')
-  : path.join(__dirname, '..', '..', 'db'); // dist/db
+const rootDir = process.cwd();
+const dbDir = path.join(rootDir, isDev ? 'db' : 'dist/db');
 const dbFile = path.join(dbDir, 'app.sqlite');
 
 // Delete old dev database if in dev-mode

@@ -60,18 +60,7 @@ export class SnakePage extends Component {
     if (this.canvas) {
       try {
         // 1. LOAD THE CHUNK MANUALLY
-        const {
-          Engine,
-          Scene,
-          Vector3,
-          ArcRotateCamera,
-          HemisphericLight,
-          PointLight,
-          MeshBuilder,
-          StandardMaterial,
-          Color3,
-          GlowLayer, 
-        } = await import('@babylonjs/core');
+        const { Engine, Scene, Vector3, ArcRotateCamera, HemisphericLight, PointLight, MeshBuilder, StandardMaterial, Color3, GlowLayer } = await import('@babylonjs/core');
 
         this.B = {
           Engine,
@@ -153,14 +142,7 @@ export class SnakePage extends Component {
     const gl = new B.GlowLayer('glow', this.scene);
     gl.intensity = 0.7;
 
-    const camera = new B.ArcRotateCamera(
-      'camera1',
-      -Math.PI / 2,
-      0.6,
-      65,
-      new B.Vector3(0, 0, 0),
-      this.scene
-    );
+    const camera = new B.ArcRotateCamera('camera1', -Math.PI / 2, 0.6, 65, new B.Vector3(0, 0, 0), this.scene);
 
     camera.attachControl(this.canvas, true);
     camera.keysUp = [];
@@ -171,18 +153,10 @@ export class SnakePage extends Component {
     camera.upperRadiusLimit = 150;
     camera.lowerBetaLimit = 0.1;
 
-    const light = new B.HemisphericLight(
-      'light1',
-      new B.Vector3(0, 1, 0),
-      this.scene
-    );
+    const light = new B.HemisphericLight('light1', new B.Vector3(0, 1, 0), this.scene);
     light.intensity = 0.6;
 
-    const ground = B.MeshBuilder.CreateGround(
-      'ground',
-      { width: this.arenaWidth, height: this.arenaHeight, subdivisions: 20 },
-      this.scene
-    );
+    const ground = B.MeshBuilder.CreateGround('ground', { width: this.arenaWidth, height: this.arenaHeight, subdivisions: 20 }, this.scene);
 
     const matGround = new B.StandardMaterial('matGround', this.scene);
     matGround.diffuseColor = new B.Color3(0.1, 0.1, 0.2);
@@ -205,19 +179,9 @@ export class SnakePage extends Component {
     const w = this.arenaWidth / 2;
     const h = this.arenaHeight / 2;
 
-    const borderPoints = [
-      new B.Vector3(-w, 0, h),
-      new B.Vector3(w, 0, h),
-      new B.Vector3(w, 0, -h),
-      new B.Vector3(-w, 0, -h),
-      new B.Vector3(-w, 0, h),
-    ];
+    const borderPoints = [new B.Vector3(-w, 0, h), new B.Vector3(w, 0, h), new B.Vector3(w, 0, -h), new B.Vector3(-w, 0, -h), new B.Vector3(-w, 0, h)];
 
-    const border = B.MeshBuilder.CreateLines(
-      'border',
-      { points: borderPoints },
-      this.scene
-    );
+    const border = B.MeshBuilder.CreateLines('border', { points: borderPoints }, this.scene);
     border.color = new B.Color3(0, 0.5, 1);
   }
 
@@ -236,11 +200,7 @@ export class SnakePage extends Component {
     matHead.emissiveColor = new B.Color3(1, 1, 1);
     this.head.material = matHead;
 
-    this.headLight = new B.PointLight(
-      'headLight',
-      new B.Vector3(0, 2, 0),
-      this.scene
-    );
+    this.headLight = new B.PointLight('headLight', new B.Vector3(0, 2, 0), this.scene);
     this.headLight.parent = this.head;
     this.headLight.diffuse = new B.Color3(0, 1, 0);
     this.headLight.intensity = 0.5;

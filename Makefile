@@ -5,9 +5,20 @@ BACKEND_FOLDER :=	$(SRC_FOLDER)/backend
 FRONTEND_FOLDER :=	$(SRC_FOLDER)/frontend
 
 # Backend services
-SERVICES_BE :=		user-service
+SERVICES_BE :=		utils \
+					user-service \
 
-SERVICES_BE_CLR :=	blue
+SERVICES_BE_CLR :=	bgBlue.bold \
+					bgMagenta.bold
+
+# Create the comma-separated names: "utils,user-service,..."
+NAMES_ARG := $(shell echo $(SERVICES_BE) | tr ' ' ',')
+
+# Create the comma-separated colors: "blue,magenta"
+COLORS_ARG := $(shell echo $(SERVICES_BE_CLR) | tr ' ' ',')
+
+# Create the command list: "npm run dev -w utils" "npm run dev -w user-service" ...
+CMDS_ARG := $(foreach s,$(SERVICES_BE),"npm run dev -w $(s)")
 
 DEV_BE_CMD :=	$(foreach s,$(SERVICES_BE),"npm run dev --prefix $(s)")
 BUILD_BE_CMD :=	$(foreach s,$(SERVICES_BE),"npm run build --prefix $(s)")
@@ -37,12 +48,7 @@ install:	install-be install-fe
 
 install-be:
 	@echo "$(BOLD)$(YELLOW)--- Installing backend dependencies...$(RESET)"
-	@echo "$(YELLOW)Installing general dependencies...$(RESET)"
-	cd ${BACKEND_FOLDER} && npm install --no-save concurrently
-	@for service in $(SERVICES_BE); do \
-		echo "$(YELLOW)Installing dependencies for '$$service'...$(RESET)"; \
-		cd ${BACKEND_FOLDER}/$$service && npm install; \
-	done
+	cd ${BACKEND_FOLDER} && npm install
 	@echo "$(BOLD)$(GREEN)Backend dependencies installed.$(RESET)"
 
 install-fe:
@@ -61,6 +67,7 @@ clean: dev-stop
 		echo "Cleaning $$service..."; \
 		rm -rf ${BACKEND_FOLDER}/$$service/node_modules 2>/dev/null || true; \
 		rm -rf ${BACKEND_FOLDER}/$$service/dist 2>/dev/null || true; \
+		rm -rf ${BACKEND_FOLDER}/$$service/*.tsbuildinfo 2>/dev/null || true; \
 	done
 	@echo "$(BOLD)$(GREEN)Project cleaned up.$(RESET)"
 
@@ -109,10 +116,17 @@ dev-be:
 		echo "Dependencies missing — installing backend packages..."; \
 		$(MAKE) -s install-be;\
 	fi
-	cd ${BACKEND_FOLDER} && npx concurrently \
-	--names $(shell echo $(SERVICES_BE) | tr ' ' ',') \
-	--prefix-colors $(shell echo $(SERVICES_BE_CLR) | tr ' ' ',') \
-	$(DEV_BE_CMD)
+	@echo "$(YELLOW)Building shared utils...$(RESET)"
+	@cd $(BACKEND_FOLDER) && npm run build -w utils
+
+	@echo "$(BOLD)$(YELLOW)--- Starting Services: [$(SERVICES_BE)]...$(RESET)"
+	
+# 2. Run concurrently with our dynamically generated arguments
+	@cd $(BACKEND_FOLDER) && npx concurrently \
+		--kill-others \
+		--names "$(NAMES_ARG)" \
+		--prefix-colors "$(COLORS_ARG)" \
+		$(CMDS_ARG)
 
 # Starts the frontend Vite server
 dev-fe:
