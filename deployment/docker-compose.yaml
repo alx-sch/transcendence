@@ -7,10 +7,10 @@ services:
       - '${HTTP_PORT}:80'
       - '${HTTPS_PORT}:443'
     volumes:
-      - ${CADDY_CONTEXT}/Caddyfile:/etc/caddy/Caddyfile
-      - ${FRONTEND_CONTEXT}/dist:/srv/dist
-      - ${VOLUME_PATH}/${VOLUME_CADDY_DATA}:/data
-      - ${VOLUME_PATH}/${VOLUME_CADDY_CONFIG}:/config
+      - ${CADDY_CONTEXT}/Caddyfile:/etc/caddy/Caddyfile:ro
+      # - ${FRONTEND_CONTEXT}/dist:/srv/dist
+      - caddy_data:/data
+      - caddy_config:/config
     # depends_on:
     #   - backend
 
@@ -31,17 +31,6 @@ services:
   #   #   interval: 10s
   #   #   timeout: 5s
   #   #   retries: 5
-
 volumes:
   caddy_data: # Storage for Caddy's SSL/TLS certificates
-    driver: local
-    driver_opts:
-      type: 'none'
-      device: '${VOLUME_PATH}/${VOLUME_CADDY_DATA}'
-      o: 'bind'
-  caddy_config: # Storage for Caddy's interal config and state
-    driver: local
-    driver_opts:
-      type: 'none'
-      device: '${VOLUME_PATH}/${VOLUME_CADDY_CONFIG}'
-      o: 'bind'
+  caddy_config: # Storage for Caddy's configuration

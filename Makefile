@@ -3,6 +3,7 @@ NAME :=				ft_transcendence
 SRC_FOLDER :=		src
 BACKEND_FOLDER :=	$(SRC_FOLDER)/backend
 FRONTEND_FOLDER :=	$(SRC_FOLDER)/frontend
+BACKUP_FOLDER :=	backups
 
 # ---------------------------------------------------
 # LIST BACKEND SERVICES
@@ -29,16 +30,19 @@ BE_PROD_CMD :=		$(foreach s,$(BE_APPS),"npm run start -w $(s)")
 
 DEPL_PATH :=			deployment
 ENV_FILE :=				${DEPL_PATH}/.env
-DOCKER_COMP_FILE :=		${DEPL_PATH}/docker-compose.prod.yaml
-
-# Volume Management
-VOLUME_FOLDER :=		./host_volumes
-
-REQUIRED_VOLUMES :=		caddy/data \
-						caddy/config
+DOCKER_COMP_FILE :=		${DEPL_PATH}/docker-compose.yaml
 
 # Docker Compose command shortcut
-DC = docker compose -f $(DOCKER_COMP_FILE) --env-file $(ENV_FILE)
+DC = docker compose -f $(DOCKER_COMP_FILE) --env-file $(ENV_FILE) -p $(NAME)
+
+# ---------------------------------------------------
+# NAMED DOCKER VOLUMES
+# ---------------------------------------------------
+
+VOLUMES :=		caddy_data \
+				caddy_config
+
+PREF_VOLUMES :=	$(foreach v,$(VOLUMES),$(NAME)_$(v))
 
 # ---------------------------------------------------
 # FORMATTING CONSTANTS
@@ -97,6 +101,12 @@ clean-db:
 	done
 	@echo "$(GREEN)$(BOLD)All databases deleted.$(RESET)"
 
+# Removes the local backup folder
+clean-backup:
+	@echo "$(BOLD)$(RED)--- Deleting Backup Folder...$(RESET)"
+	rm -rf $(BACKUP_FOLDER)
+	@echo "$(GREEN)$(BOLD)Backup folder deleted.$(RESET)"
+
 typecheck:	typecheck-be typecheck-fe
 
 typecheck-be:
@@ -121,18 +131,13 @@ typecheck-fe:
 	@echo "$(BOLD)$(GREEN)Frontend typecheck complete.$(RESET)"
 
 # 'clean' + 'clean-db' + stops all running containers and remove all Docker resources system-wide
-# Uses a temp container to delete persistent volume data (to avoid permission issues on rootless hosts)
-purge:	clean clean-db
-	@echo "$(BOLD)$(RED)☢️  SYSTEM-WIDE PURGE: Stopping All Running Docker Containers...$(RESET)"
+purge:	clean clean-db clean-backup
+	@echo "$(BOLD)$(RED)SYSTEM-WIDE PURGE: Removing All Docker Resources...$(RESET)"
 	@docker stop $$(docker ps -aq) 2>/dev/null || true
-	
-	@echo "$(BOLD)$(RED)💥 Deleting persistent volumes...$(RESET)"
-	@docker run --rm -v $$(pwd):/clean -w /clean alpine rm -rf $(VOLUME_FOLDER)
-	
-	@echo "$(BOLD)$(RED)🔥 Removing all unused Docker resources (containers, images, volumes)...$(RESET)"
+	$(DC) down --volumes --rmi all
 	@docker system prune -af --volumes
 	@docker system df
-	@echo "$(BOLD)$(GREEN)🗑️  All Docker resources have been purged.$(RESET)"
+	@echo "$(BOLD)$(GREEN)All Docker resources have been purged.$(RESET)"
 
 #############################
 ## 🚀 DEVELOPMENT COMMANDS ##
@@ -153,7 +158,7 @@ dev-be:
 	fi
 	@cd $(BACKEND_FOLDER) && npx concurrently \
 		--names "$(BE_NAMES_ARG)" \
-		--prefix-colors "$(BE_APPS_CLR)" \
+		--prefix-colors "$(BE_COLORS_ARG)" \
 		$(BE_DEV_CMD)
 
 # Starts the frontend Vite server
@@ -172,6 +177,61 @@ dev-stop:
 	pkill -f "[v]ite" || true
 	sleep 1
 	@echo "$(BOLD)$(GREEN)All DEV processes stopped.$(RESET)"
+
+###############################
+## 🔍 DOCKER VOLUME COMMANDS ##
+###############################
+
+# Due to rootless system, it's tricky using mounted volumes or named volumes with local paths,
+# as permission issues may arise. These commands help manage named volumes managed by Docker.
+
+vol-ls:
+	@echo "$(BOLD)$(YELLOW)--- Listing Docker Volumes...$(RESET)"
+	@for vol in $(PREF_VOLUMES); do \
+		if docker volume inspect $$vol >/dev/null 2>&1; then \
+			echo "$(YELLOW)$(BOLD)Contents of $$vol: $(RESET)"; \
+			docker run --rm -v $$vol:/data alpine ls -R /data 2>/dev/null; \
+			echo ""; \
+		else \
+			echo "$(RED)Volume '$$vol' does not exist!$(RESET)"; \
+		fi; \
+	done
+
+vol-inspect:
+	@echo "$(BOLD)$(YELLOW)--- Inspecting Docker Volumes...$(RESET)"
+	@for vol in $(PREF_VOLUMES); do \
+		if docker volume inspect $$vol >/dev/null 2>&1; then \
+			echo "$(YELLOW)$(BOLD)Inspecting $$vol: $(RESET)"; \
+			docker volume inspect $$vol; \
+			echo ""; \
+		else \
+			echo "$(RED)Volume '$$vol' does not exist!$(RESET)"; \
+		fi; \
+	done
+
+vol-backup:
+	@echo "$(BOLD)$(YELLOW)--- Backing Up Docker Volumes...$(RESET)"
+	@for vol in $(PREF_VOLUMES); do \
+		if docker volume inspect $$vol >/dev/null 2>&1; then \
+			mkdir -p $(BACKUP_FOLDER); \
+			echo "Backing up '$$vol' to '$(BACKUP_FOLDER)/$$vol.tar.gz'"; \
+			docker run --rm -v $$vol:/data -v $$(pwd)/$(BACKUP_FOLDER):/backup alpine sh -c "cd /data && tar czf /backup/$$vol.tar.gz ."; \
+		else \
+			echo "$(RED)Volume '$$vol' does not exist!$(RESET)"; \
+		fi; \
+	done
+
+# Restores volumes from local backups, overwriting existing data
+vol-restore:
+	@echo "$(BOLD)$(YELLOW)--- Restoring Docker Volumes from Backups...$(RESET)"
+	@for vol in $(PREF_VOLUMES); do \
+		if [ -f "$(BACKUP_FOLDER)/$$vol.tar.gz" ]; then \
+			echo "Restoring '$$vol' from '$(BACKUP_FOLDER)/$$vol.tar.gz'"; \
+			docker run --rm -v $$vol:/data -v $$(pwd)/$(BACKUP_FOLDER):/backup alpine sh -c "cd /data && tar xzf /backup/$$vol.tar.gz"; \
+		else \
+			echo "$(RED)Backup for volume '$$vol' does not exist!$(RESET)"; \
+		fi; \
+	done
 
 ############################
 ## 📦 PRODUCTION COMMANDS ##
@@ -199,21 +259,8 @@ build-fe:
 	cd ${FRONTEND_FOLDER} && npm run build
 	@echo "$(BOLD)$(GREEN)Frontend build complete.$(RESET)"
 
-# 2. Starts production services using Vite Preview
 start:	
 	@echo "$(BOLD)$(YELLOW)--- Starting Production Services via Docker Compose...$(RESET)"
-
-	@echo "$(BOLD)$(YELLOW)📁 Creating host directories for volumes...$(RESET)"
-	@for dir in $(REQUIRED_VOLUMES); do \
-		FULL_PATH="$(VOLUME_FOLDER)/$$dir"; \
-		if [ ! -d $$FULL_PATH ]; then \
-			echo "Creating directory: $$FULL_PATH"; \
-			mkdir -p $$FULL_PATH; \
-		fi \
-	done
-	@echo "$(BOLD)$(GREEN)All host volume directories are set up.$(RESET)"
-
-	@echo "$(DC) up -d --build"
 	$(DC) up -d --build
 	@echo "$(BOLD)$(GREEN)Production services started in detached mode. Check logs with: $(YELLOW)$(DC) logs -f$(RESET)"
 
@@ -223,7 +270,10 @@ stop:
 	$(DC) down
 
 .PHONY:	install install-be install-fe \
-		clean clean-db purge \
+		clean clean-db clean-backup \
+		typecheck typecheck-be typecheck-fe \
+		purge \
 		dev dev-be dev-fe dev-stop \
+		vol-ls vol-inspect vol-backup vol-restore \
 		build build-be build-fe \
 		start stop
