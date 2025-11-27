@@ -1,6 +1,8 @@
 # Project-specific files to ignore
 README.md
 assets/
+*.tsbuildinfo
+dist/
 node_modules/
 
 # IDE and editor configuration
