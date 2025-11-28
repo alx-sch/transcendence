@@ -1,19 +1,32 @@
 # For local hosting:
-localhost {
-	# Use a self-signed cert for dev
-	tls internal
+# Redirect HTTP to HTTPS
+localhost:80 {
+    redir https://{host}:8443{uri} 308
+}
 
-	# 1. Handle API requests
-	# Proxy all /api requests to the backend service
-	reverse_proxy /api/* backend:3000
+# HTTPS site
+localhost:443 {
+    # Use self-signed certs for dev
+    tls internal
 
-	# 2. Handle Frontend
-	# Serve the static files from the 'dist' folder
-	root * /srv/dist
-	# try_files is needed for Single Page Apps (SPAs)
-	# It makes sure /profile or /users still load index.html
-	try_files {path} /index.html
-	file_server
+    # ---------------------
+    # API Proxy
+    # ---------------------
+    # If this matches, Caddy STOPS here and runs the proxy.
+    # This strips "/api" so the backend receives just "/users"
+    handle_path /api/* {
+        reverse_proxy user-service:3000
+    }
+
+    # ---------------------
+    # Frontend SPA
+    # ---------------------
+    # This only runs if the path did NOT match /api/*
+    handle {
+        root * /srv/dist
+        try_files {path} /index.html
+        file_server
+    }
 }
 
 # For real production (delete the 'localhost' block above and use this):

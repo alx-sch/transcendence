@@ -91,10 +91,10 @@ clean:	dev-stop
 clean-db:
 	@echo "$(BOLD)$(RED)--- Deleting All Databases...$(RESET)"
 	@for service in $(BE_APPS); do \
-		DB_DIR="${BACKEND_FOLDER}/$$service/db"; \
+		DB_DIR="${BACKEND_FOLDER}/$$service/storage"; \
 		if [ -d $$DB_DIR ]; then \
 			echo "Deleting databases in '$$service'..."; \
-			rm -f $$DB_DIR/*.sqlite $$DB_DIR/*.sqlite-wal $$DB_DIR/*.sqlite-shm; \
+			rm -rf $$DB_DIR; \
 		else \
 			echo "No DB directory found for '$$service'"; \
 		fi \
@@ -290,15 +290,27 @@ run-fe:
 ###############################
 
 # Starts production services via Docker Compose
-start:	
+start:
+	@ if [ ! -d "${FRONTEND_FOLDER}/dist" ]; then \
+		echo "$(BOLD)$(YELLOW)--- Frontend build not found...$(RESET)"; \
+		$(MAKE) -s build-fe; \
+	fi
+
 	@echo "$(BOLD)$(YELLOW)--- Starting Production Services via Docker Compose...$(RESET)"
 	$(DC) up -d --build
-	@echo "$(BOLD)$(GREEN)Production services started in detached mode. Check logs with: $(YELLOW)$(DC) logs -f$(RESET)"
+	@echo "$(BOLD)$(GREEN)Production services started in detached mode.$(RESET)"
+	@echo ""
+	@echo "•   View logs:"
+	@echo "    '$(YELLOW)$(DC) logs -f$(RESET)'"
+	@echo "•   Open the application:"
+	@echo "    '$(YELLOW)https://localhost:8443$(RESET)'"
+	@echo "     or '$(YELLOW)http://localhost:8080$(RESET)' (redirects to HTTPS)"
 
 # Stops production services via Docker Compose
 stop:
-	@echo "$(BOLD)$(GREEN)--- Stopping production services... ---$(RESET)"
+	@echo "$(BOLD)$(YELLOW)--- Stopping production services...$(RESET)"
 	$(DC) down
+	@echo "$(BOLD)$(GREEN)Production services stopped.$(RESET)"
 
 ######################
 ## 📌 PHONY TARGETS ##

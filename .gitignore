@@ -22,7 +22,7 @@ Thumbs.db
 # .env
 
 #Database folder
-db/
+storage/
 
 # Temp NFS files
 .nfs*
