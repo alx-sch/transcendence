@@ -7,6 +7,47 @@ export function createHandlers(db: any) {
     return rows;
   };
 
+  const loginHandler = async (request: any, reply: any) => {
+      try {
+      const body = (request.body as any) ?? {};
+      const { username, password } = body;
+
+      if (!username || !password) {
+        return reply.status(400).send({ error: 'Invalid input: username, email and password(>=8) required' });
+      }
+
+      const existingUsername = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+      if (!existingUsername) {
+        return reply.status(409).send({ error: 'Username does not exist' });
+      }
+
+      // Fetch stored user
+      const user = db.prepare('SELECT id, username, passwordHash FROM users WHERE username = ?')
+                   .get(username);
+
+      if (!user) {
+      return reply.status(409).send({ error: 'Username does not exist' });
+      }
+
+      // Compare password with stored hash
+      const passwordIsValid = await bcrypt.compare(password, user.passwordHash);
+      if (!passwordIsValid) {
+      return reply.status(401).send({ error: 'Invalid password' });
+      }
+
+      request.session.user = { id: user.id, username: user.username };
+      
+      // Logged in successfully
+      return reply.status(200).send({
+        id: user.id,
+        username: user.username,
+      });
+      }
+      catch (err) {
+      return reply.status(500).send({ error: 'Server error' });
+      }
+  };
+
   const registerHandler = async (request: any, reply: any) => {
     try {
       const body = (request.body as any) ?? {};
@@ -33,12 +74,29 @@ export function createHandlers(db: any) {
       const id = runResult.lastInsertRowid;
 
       return reply.status(201).send({ id, username, email });
-    } catch (err) {
+    } 
+    catch (err) {
       const payload = err instanceof Error ? { message: err.message, stack: err.stack } : { value: String(err) };
       error('register error', payload);
-      return reply.status(500).send({ error: 'Server error' });
+      return reply.status(500).send({ error:   'Server error' });
     }
   };
 
-  return { registerHandler, userHandler };
+  const sessionHandler = async (request: any, reply: any) => {
+    if (!request.session.user) {
+      return reply.status(200).send({ loggedIn: false, user: null });
+    }
+    return reply.status(200).send({
+      loggedIn: true,
+      user: request.session.user
+    })
+
+  };
+
+  const logoutHandler = async (request: any, reply: any) => {
+  request.session.destroy();
+  reply.send({ ok: true });
+  }
+
+  return { registerHandler, userHandler, loginHandler, sessionHandler, logoutHandler }; 
 }

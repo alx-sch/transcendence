@@ -1,4 +1,5 @@
 import { Component } from '../core/Component.js';
+import { updateLoginStatus } from '../utils/login-status.js';
 
 export class PongPage extends Component {
   private canvas: HTMLCanvasElement | null = null;
@@ -15,6 +16,7 @@ export class PongPage extends Component {
   render(): string {
     return ` 
         <section class="game-container" style="display:flex; flex-direction:column; align-items:center;">
+        <p id="login-status" class="fixed top-4 right-4 p-2 bg-gray-800 text-white rounded shadow-md z-50"></p>
         <h1 class="text-2xl font-bold mb-4">Pong</h1>
         <canvas id="pongCanvas" width="800" height="600" style="background: #000; border: 2px solid #fff;"></canvas>
         <p>Use your mouse to move the left paddle</p>
@@ -26,15 +28,21 @@ export class PongPage extends Component {
   connectedCallback() {
     // 1. Initialize Canvas
     this.innerHTML = this.render(); // Render the HTML first
+
+    // 2. Update login status
+    const status = this.querySelector<HTMLElement>('#login-status'); // Stores an element (<p id="login-status" class="text-sm mt-2">).
+    if (!status) return;
+    updateLoginStatus(status);
+
     this.canvas = this.querySelector('#pongCanvas');
 
     if (this.canvas) {
       this.ctx = this.canvas.getContext('2d');
 
-      // 2. Add Event Listeners
+      // 3. Add Event Listeners
       this.canvas.addEventListener('mousemove', this.handleMouseMove);
 
-      // 3. Start the Game Loop
+      // 4. Start the Game Loop
       this.gameLoop();
     }
   }

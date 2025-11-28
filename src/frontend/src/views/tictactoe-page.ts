@@ -1,9 +1,11 @@
 import { Component } from "../core/Component.js";
+import { updateLoginStatus } from '../utils/login-status.js';
 
 export class TicTacToe extends Component {
   render(): string {
     return `
       <section class="p-8">
+      <p id="login-status" class="fixed top-4 right-4 p-2 bg-gray-800 text-white rounded shadow-md z-50"></p>
         <h1 class="text-2xl font-bold mb-4">Tic Tac Toe</h1>
         <div id="tic-tac-toe" class="grid grid-cols-3 gap-2 w-50">
           <div class="cell border p-4 text-center size-15 cursor-pointer"></div>
@@ -23,6 +25,12 @@ export class TicTacToe extends Component {
 
   connectedCallback() {
     super.connectedCallback(); // this runs render()
+        
+    // Update login status
+    const status = this.querySelector<HTMLElement>('#login-status'); // Stores an element (<p id="login-status" class="text-sm mt-2">).
+    if (!status) return;
+    updateLoginStatus(status);
+    
     this.initGame();
   }
 

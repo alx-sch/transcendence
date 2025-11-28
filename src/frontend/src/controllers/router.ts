@@ -4,6 +4,9 @@ import '../views/pong3d-page.js';
 import '../views/tictactoe-page.js';
 import '../views/snake-page.js';
 import '../views/register-page.js';
+import '../views/login-page.js';
+import '../views/session-page.js';
+
 import { UsersPage } from '../views/users-page.js';
 
 export function router(): void {
@@ -41,6 +44,12 @@ export function router(): void {
       break;
     case '/snake':
       root.innerHTML = '<snake-page></snake-page>';
+      break;
+    case '/login':
+      root.innerHTML = '<login-page></login-page>';
+      break;
+    case '/session':
+      root.innerHTML = '<session-page></session-page>';
       break;
     default:
       root.textContent = '404';

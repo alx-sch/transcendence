@@ -3,6 +3,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
 import formbody from '@fastify/formbody';
+import fastifyCookie from "@fastify/cookie";
+import fastifySession from "@fastify/session";
+import dotenv from "dotenv";
 import Database from 'better-sqlite3';
 import { info, warn, error, debug } from '../logger.js';
 import { createHandlers } from './handlers.js';
@@ -11,8 +14,35 @@ import { createHandlers } from './handlers.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load environment variables from .env file
+dotenv.config({ path: "../../../deployment/.env" });
+
+// Retrieve secrets from environment variables
+const COOKIE_SECRET = process.env.COOKIE_SECRET;
+const SESSION_SECRET = process.env.SESSION_SECRET;
+
+// If any of them are not there, the server cannot start
+if (!COOKIE_SECRET || !SESSION_SECRET) {
+  error("FATAL ERROR: COOKIE_SECRET and SESSION_SECRET must be set in environment variables.");
+  process.exit(1);
+}
+
+// Setup Fastify server
 const fastify = Fastify({ logger: true });
-fastify.register(formbody);
+
+// Set up Fastify plugins
+fastify.register(formbody); // Allows Fastify to read <form> POST data
+await fastify.register(fastifyCookie, { // Cookies are required for storing the session ID
+  secret: COOKIE_SECRET // used to sign cookies
+});
+await fastify.register(fastifySession, { // Allows session management
+  secret: SESSION_SECRET, 
+  cookie: {
+    secure: false,  // set to true in production with HTTPS
+    maxAge: 1000 * 60 * 60 * 24 // 1 day
+  }
+});
+
 const dbDir = path.join(__dirname, 'db');
 const dbFile = path.join(dbDir, 'app.sqlite');
 
@@ -58,14 +88,15 @@ if (userCount === 0) {
 }
 
 // Routes
-const { registerHandler, userHandler } = createHandlers(db);
+const { registerHandler, userHandler, loginHandler, sessionHandler, logoutHandler } = createHandlers(db);
 fastify.get('/', (request, reply) => {
   return { hello: 'world' };
 });
-fastify.post('/api/register', registerHandler);
-fastify.post('/register', registerHandler);
-fastify.get('/api/users', userHandler);
 fastify.get('/users', userHandler);
+fastify.post('/register', registerHandler);
+fastify.post('/login', loginHandler);
+fastify.get('/session', sessionHandler);
+fastify.post('/logout', logoutHandler);
 
 // Start the server
 const start = async () => {

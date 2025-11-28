@@ -1,4 +1,6 @@
 import { Component } from '../core/Component.js';
+import { updateLoginStatus } from '../utils/login-status.js';
+
 import {
   Engine,
   Scene,
@@ -37,6 +39,7 @@ export class SnakePage extends Component {
   render(): string {
     return `
       <section class="w-full h-full flex flex-col items-center justify-center bg-gray-900">
+      <p id="login-status" class="fixed top-4 right-4 p-2 bg-gray-800 text-white rounded shadow-md z-50"></p>
         <h1 class="text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-green-500" style="text-shadow: 0 0 10px rgba(0,255,255,0.5);">
             NEON SNAKE 3D
         </h1>
@@ -60,6 +63,11 @@ export class SnakePage extends Component {
   connectedCallback() {
     this.innerHTML = this.render();
     this.canvas = this.querySelector('#renderCanvas');
+
+    // Update login status
+    const status = this.querySelector<HTMLElement>('#login-status'); // Stores an element (<p id="login-status" class="text-sm mt-2">).
+    if (!status) return;
+    updateLoginStatus(status);
 
     if (this.canvas) {
       this.engine = new Engine(this.canvas, true);

@@ -1,3 +1,5 @@
+import { updateLoginStatus } from '../utils/login-status.js';
+
 export function UsersPage() {
   const root = document.createElement("div");
   root.innerHTML = "<main class='p-8'><h1>Users</h1><p>Loading...</p></main>";
