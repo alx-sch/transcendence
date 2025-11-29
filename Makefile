@@ -9,7 +9,7 @@ BACKUP_FOLDER :=	backups
 # LIST BACKEND SERVICES
 # ---------------------------------------------------
 
-BE_APPS :=			user-service 
+BE_APPS :=			user-service
 
 # Logging in different colors for each backend service (using NPM 'concurrently')
 BE_APPS_CLR :=		bgBlue.bold

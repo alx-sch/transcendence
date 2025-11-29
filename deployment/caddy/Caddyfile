@@ -1,4 +1,7 @@
-# For local hosting:
+# ==================================
+# LOCAL DEVELOPMENT (visit localhost)
+# ==================================
+
 # Redirect HTTP to HTTPS
 localhost:80 {
     redir https://{host}:8443{uri} 308
@@ -10,13 +13,18 @@ localhost:443 {
     tls internal
 
     # ---------------------
-    # API Proxy
+    # API Proxy to Backend Services
     # ---------------------
     # If this matches, Caddy STOPS here and runs the proxy.
-    # This strips "/api" so the backend receives just "/users"
-    handle_path /api/* {
+    # This strips "/api/users" so the backend receives just "/"
+    handle_path /api/users* {
         reverse_proxy user-service:3000
     }
+
+    # Add more API routes as needed:
+    # handle_path /api/registration* {
+    #     reverse_proxy registration-service:3333
+    # }
 
     # ---------------------
     # Frontend SPA
@@ -29,14 +37,18 @@ localhost:443 {
     }
 }
 
-# For real production (delete the 'localhost' block above and use this):
-#
-# your-domain.com {
-#     # 1. Handle API requests
-#     reverse_proxy /api/* backend:3000
-#
-#     # 2. Handle Frontend
-#     root * /srv/dist
-#     try_files {path} /index.html
-#     file_server
-# }
+# ==================================
+# PRODUCTION (visit the domain)
+# ==================================
+
+exotischkochen.de {
+    handle_path /api/users* {
+        reverse_proxy user-service:3000
+    }
+
+    handle {
+        root * /srv/dist
+        try_files {path} /index.html
+        file_server
+    }
+}
