@@ -2,7 +2,7 @@ export function UsersPage() {
   const root = document.createElement('div');
   root.innerHTML = "<main class='p-8'><h1>Users</h1><p>Loading...</p></main>";
 
-  fetch('/api/users')
+  fetch('/api-user/list')
     .then((res) => res.json())
     .then((data: { id: number; name: string; email: string }[]) => {
       root.innerHTML = `

@@ -286,7 +286,7 @@ run-be:
 		echo "Build missing — building backend..."; \
 		$(MAKE) -s build-be;\
 	fi
-	cd ${BACKEND_FOLDER} && npx concurrently \
+	cd ${BACKEND_FOLDER} && npx -y concurrently \
 		--names $(shell echo $(BE_APPS) | tr ' ' ',') \
 		--prefix-colors $(shell echo $(BE_APPS_CLR) | tr ' ' ',') \
 		$(BE_RUN_CMD)

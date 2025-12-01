@@ -116,7 +116,7 @@ try {
 
 // GET ALL USERS
 // Caddy sends: /api/users -> Backend receives: /
-fastify.get('/', (request, reply) => {
+fastify.get('/list', (request, reply) => {
   try {
     const users = db.prepare('SELECT * FROM users').all();
     return users;
@@ -126,9 +126,9 @@ fastify.get('/', (request, reply) => {
   }
 });
 
-// fastify.get('/', (request, reply) => {
-//   return { hello: 'world', service: 'user-service' };
-// });
+fastify.get('/', (request, reply) => {
+  return { hello: 'world', service: 'user-service' };
+});
 
 // ----------------------------------
 // Start Server

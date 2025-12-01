@@ -15,9 +15,9 @@ localhost:443 {
     # ---------------------
     # API Proxy to Backend Services
     # ---------------------
-    # If this matches, Caddy STOPS here and runs the proxy.
-    # This strips "/api/users" so the backend receives just "/"
-    handle_path /api/users* {
+    # Match any request starting with '/api/user'
+    # Strip "/api/user", leave the rest (.e.g., '/list')
+    handle_path /api-user/* {
         reverse_proxy user-service:3000
     }
 
@@ -41,14 +41,14 @@ localhost:443 {
 # PRODUCTION (visit the domain)
 # ==================================
 
-exotischkochen.de {
-    handle_path /api/users* {
-        reverse_proxy user-service:3000
-    }
+# exotischkochen.de {
+#     handle_path /api/users* {
+#         reverse_proxy user-service:3000
+#     }
 
-    handle {
-        root * /srv/dist
-        try_files {path} /index.html
-        file_server
-    }
-}
+#     handle {
+#         root * /srv/dist
+#         try_files {path} /index.html
+#         file_server
+#     }
+# }
