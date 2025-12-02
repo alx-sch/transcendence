@@ -3,6 +3,7 @@ import '../views/pong-page.js';
 import '../views/pong3d-page.js';
 import '../views/tictactoe-page.js';
 import '../views/snake-page.js';
+import '../views/websocket-page.js';
 import { UsersPage } from '../views/users-page.js';
 
 export function router(): void {
@@ -37,6 +38,9 @@ export function router(): void {
       break;
     case '/snake':
       root.innerHTML = '<snake-page></snake-page>';
+      break;
+    case '/websocket':
+      root.innerHTML = '<websocket-page></websocket-page>';
       break;
     default:
       root.textContent = '404';

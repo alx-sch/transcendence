@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Handles game logic",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "dev": "node ./dist/server.js"
   },
   "type": "module",
   "dependencies": {
