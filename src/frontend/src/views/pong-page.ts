@@ -1,5 +1,5 @@
 import { Component } from '../core/Component.js';
-import { updateLoginStatus } from '../utils/login-status.js';
+import { logoutBtnHandler, updateLoginStatus } from '../utils/login-status.js';
 
 export class PongPage extends Component {
   private canvas: HTMLCanvasElement | null = null;
@@ -16,10 +16,15 @@ export class PongPage extends Component {
   render(): string {
     return ` 
         <section class="game-container" style="display:flex; flex-direction:column; align-items:center;">
-        <p id="login-status" class="fixed top-4 right-4 p-2 bg-gray-800 text-white rounded shadow-md z-50"></p>
-        <h1 class="text-2xl font-bold mb-4">Pong</h1>
-        <canvas id="pongCanvas" width="800" height="600" style="background: #000; border: 2px solid #fff;"></canvas>
-        <p>Use your mouse to move the left paddle</p>
+          <div class="fixed top-4 right-4 flex items-center gap-2 z-50">
+          <p id="login-status" class="p-2 bg-gray-800 text-white rounded shadow-md"></p>
+          <button id="logout-btn" class="p-2 bg-red-500 hover:bg-red-600 text-white px-3 py-3 rounded text-sm">
+            Logout
+          </button>
+          </div>
+          <h1 class="text-2xl font-bold mb-4">Pong</h1>
+          <canvas id="pongCanvas" width="800" height="600" style="background: #000; border: 2px solid #fff;"></canvas>
+          <p>Use your mouse to move the left paddle</p>
         </section>
     `;
   }
@@ -29,10 +34,12 @@ export class PongPage extends Component {
     // 1. Initialize Canvas
     this.innerHTML = this.render(); // Render the HTML first
 
-    // 2. Update login status
+    // 2. Update login status and add logout button handler
     const status = this.querySelector<HTMLElement>('#login-status'); // Stores an element (<p id="login-status" class="text-sm mt-2">).
-    if (!status) return;
+    const logoutBtn = this.querySelector<HTMLButtonElement>('#logout-btn'); // Target logout button element
+    if (!status || !logoutBtn) return;
     updateLoginStatus(status);
+    logoutBtn.addEventListener('click', logoutBtnHandler.bind(null, status));
 
     this.canvas = this.querySelector('#pongCanvas');
 

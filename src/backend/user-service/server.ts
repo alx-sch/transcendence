@@ -89,14 +89,15 @@ if (userCount === 0) {
 
 // Routes
 const { registerHandler, userHandler, loginHandler, sessionHandler, logoutHandler } = createHandlers(db);
-fastify.get('/', (request, reply) => {
-  return { hello: 'world' };
-});
 fastify.get('/users', userHandler);
 fastify.post('/register', registerHandler);
 fastify.post('/login', loginHandler);
 fastify.get('/session', sessionHandler);
 fastify.post('/logout', logoutHandler);
+
+fastify.get('/', (request, reply) => {
+  return { hello: 'world' };
+});
 
 // Start the server
 const start = async () => {

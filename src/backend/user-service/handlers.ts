@@ -1,13 +1,13 @@
 import bcrypt from 'bcryptjs';
 import { info, warn, error, debug } from '../logger.js';
 
-export function createHandlers(db: any) {
-  const userHandler = async (request: any, reply: any) => {
+export function createHandlers(db: any) { // Creates and returns user-related route handlers
+  const userHandler = async (request: any, reply: any) => { // Retrieves all users
     const rows = db.prepare('SELECT id, username, email FROM users').all();
     return rows;
   };
 
-  const loginHandler = async (request: any, reply: any) => {
+  const loginHandler = async (request: any, reply: any) => { // Handles user login
       try {
       const body = (request.body as any) ?? {};
       const { username, password } = body;
@@ -48,7 +48,7 @@ export function createHandlers(db: any) {
       }
   };
 
-  const registerHandler = async (request: any, reply: any) => {
+  const registerHandler = async (request: any, reply: any) => { // Handles user registration
     try {
       const body = (request.body as any) ?? {};
       const { username, email, password } = body;
@@ -82,7 +82,7 @@ export function createHandlers(db: any) {
     }
   };
 
-  const sessionHandler = async (request: any, reply: any) => {
+  const sessionHandler = async (request: any, reply: any) => { // Retrieves session info (login status)
     if (!request.session.user) {
       return reply.status(200).send({ loggedIn: false, user: null });
     }
@@ -93,7 +93,7 @@ export function createHandlers(db: any) {
 
   };
 
-  const logoutHandler = async (request: any, reply: any) => {
+  const logoutHandler = async (request: any, reply: any) => { // Handles user logout
   request.session.destroy();
   reply.send({ ok: true });
   }

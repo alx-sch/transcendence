@@ -1,5 +1,5 @@
 import { Component } from '../core/Component.js'; // Your base class
-import { updateLoginStatus } from '../utils/login-status.js';
+import { logoutBtnHandler, updateLoginStatus } from '../utils/login-status.js';
 
 import {
   Engine,
@@ -33,7 +33,12 @@ export class PongPage3d extends Component {
   render(): string {
     return `
       <section class="w-full h-full flex flex-col items-center justify-center">
-      <p id="login-status" class="fixed top-4 right-4 p-2 bg-gray-800 text-white rounded shadow-md z-50"></p>
+          <div class="fixed top-4 right-4 flex items-center gap-2 z-50">
+          <p id="login-status" class="p-2 bg-gray-800 text-white rounded shadow-md"></p>
+          <button id="logout-btn" class="p-2 bg-red-500 hover:bg-red-600 text-white px-3 py-3 rounded text-sm">
+            Logout
+          </button>
+          </div>
         <h1 class="text-2xl font-bold mb-4 text-white">3D Pong (Babylon.js)</h1>
         <div style="position: relative; width: 800px; height: 600px;">
             <canvas id="renderCanvas" style="width: 100%; height: 100%; outline: none;"></canvas>
@@ -50,10 +55,12 @@ export class PongPage3d extends Component {
     this.innerHTML = this.render();
     this.canvas = this.querySelector('#renderCanvas');
 
-    // Update login status
+    // Update login status and add logout button handler
     const status = this.querySelector<HTMLElement>('#login-status'); // Stores an element (<p id="login-status" class="text-sm mt-2">).
-    if (!status) return;
+    const logoutBtn = this.querySelector<HTMLButtonElement>('#logout-btn'); // Target logout button element
+    if (!status || !logoutBtn) return;
     updateLoginStatus(status);
+    logoutBtn.addEventListener('click', logoutBtnHandler.bind(null, status));
   
     if (this.canvas) {
       // 1. Init Babylon Engine

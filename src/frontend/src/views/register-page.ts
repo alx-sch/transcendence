@@ -1,15 +1,18 @@
 import { Component } from '../core/Component.js';
-import { updateLoginStatus } from '../utils/login-status.js';
+import { logoutBtnHandler, updateLoginStatus } from '../utils/login-status.js';
 
 export class RegisterPage extends Component { // This defines a new JS class RegisterPage that extends Component (the base class).
   render(): string { // This works as a "declaration/implementation" of the render() method from RegisterPage. Nothing is getting called yet.
     return `
       <main class="p-8">
-        <p id="login-status" class="fixed top-4 right-4 p-2 bg-gray-800 text-white rounded shadow-md z-50"></p>
-        <section class="register-page max-w-md mx-auto flex flex-col gap-3">
-
+          <div class="fixed top-4 right-4 flex items-center gap-2 z-50">
+          <p id="login-status" class="p-2 bg-gray-800 text-white rounded shadow-md"></p>
+          <button id="logout-btn" class="p-2 bg-red-500 hover:bg-red-600 text-white px-3 py-3 rounded text-sm">
+            Logout
+          </button>
+          </div>
+          <section class="register-page max-w-md mx-auto flex flex-col gap-3">
           <h1 class="text-2xl font-bold mb-2">User registration</h1>
-
           <form id="register-form" class="flex flex-col gap-3" action="/api/register" method="post">
             <input name="username" autofocus type="text" class="text-sm p-2 border border-gray-300 rounded" placeholder="Username" required />
             <input name="email" type="email" class="text-sm p-2 border border-gray-300 rounded" placeholder="Email" required />
@@ -33,10 +36,15 @@ export class RegisterPage extends Component { // This defines a new JS class Reg
     const form = this.querySelector<HTMLFormElement>('#register-form'); // The form element itself (with already existing subelements - username, password, email).
     const msg = this.querySelector<HTMLElement>('#reg-msg'); // Creates an element (<p id="reg-msg" class="text-sm">).
     const status = this.querySelector<HTMLElement>('#login-status'); // Stores an element (<p id="login-status" class="text-sm mt-2">).
-    if (!form || !msg || !status) return;
+    const logoutBtn = this.querySelector<HTMLButtonElement>('#logout-btn'); // Target logout button element
+    if (!form || !msg || !status || !logoutBtn) return;
 
     // Gets called initially to display current login state
     updateLoginStatus(status);
+
+    // Logout button handler
+    logoutBtn.addEventListener('click', logoutBtnHandler.bind(null, status));
+  
     // 3. Defines an asynchronous function onSubmit to handle the form submission event (will not be called immediately, but when the user clicks "Register").
   
     // 3.1. Sets up initial settings.
