@@ -4,12 +4,32 @@ import type { FastifyInstance } from "fastify";
 import formbody from '@fastify/formbody';
 import fastifyCookie from "@fastify/cookie";
 import fastifySession from "@fastify/session";
-import { error } from '../utils/logger.js';
 
 // Create and configure Fastify server instance (with cookie and session support).
 // @returns Configured Fastify instance.
 
-export async function createFastifyServer(): Promise<FastifyInstance> {
+export async function createFastifyServer(isDev: boolean): Promise<FastifyInstance> {
+
+	// Setup Fastify server
+	const fastify = Fastify({
+	logger: isDev
+		? {
+			// DEV: Configuration object with pino-pretty transport
+			transport: {
+			target: 'pino-pretty',
+			options: {
+				colorize: true,
+				translateTime: 'SYS:HH:MM:ss',
+				ignore: 'pid,hostname',
+			},
+			},
+		}
+		: true, // PROD: Use `true` for default Fastify logger (JSON format)
+	});
+
+	// ------------------------------------
+	// Set up session and cookie plugins
+	// ------------------------------------
 
 	// Load environment variables from .env file
 	dotenv.config({ path: "../../../deployment/.env" });
@@ -20,12 +40,9 @@ export async function createFastifyServer(): Promise<FastifyInstance> {
 
 	// If any of them are not there, the server cannot start
 	if (!COOKIE_SECRET || !SESSION_SECRET) {
-	error("FATAL ERROR: COOKIE_SECRET and SESSION_SECRET must be set in /deployment/.env.");
+	fastify.log.error("FATAL ERROR: COOKIE_SECRET and SESSION_SECRET must be set in /deployment/.env.");
 	process.exit(1);
 	}
-
-	// Setup Fastify server
-	const fastify = Fastify({ logger: true });
 
 	// Set up Fastify plugins
 	fastify.register(formbody); // Allows Fastify to read <form> POST data

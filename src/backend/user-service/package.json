@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx watch src/index.ts",
     "build": "tsc",
-    "postbuild": "cp -r db dist/db",
     "start": "NODE_ENV=production node src/dist/index.js",
+    "postbuild": "cp -r data dist/data",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

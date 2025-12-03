@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { error } from '../utils/logger.js';
+import type { FastifyInstance } from 'fastify';
 
 /**
  * 
@@ -9,17 +9,23 @@ import { error } from '../utils/logger.js';
  */
 
 // Creates and returns user-related route handlers
-export function createHandlers(db: any) {
+// Caddy sends e.g.: /api/users -> Backend receives: /
+export function createHandlers(db: any, fastify: FastifyInstance) {
 
 	// Only for testing!
 	const testHandler = (request: any, reply: any ) => {
-	return { hello: 'world' };
+	return { hello: 'world', service: 'user-service' };
 	};
 
 	// Retrieves all users
 	const userHandler = async (request: any, reply: any) => { // Retrieves all users
-	const rows = db.prepare('SELECT id, username, email FROM users').all();
-	return rows;
+	  try {
+    const users = db.prepare('SELECT * FROM users').all();
+    return users;
+  	} catch (e) {
+    fastify.log.error(e, 'Error fetching users:');
+    return reply.status(500).send({ error: 'Database error' });
+  	}
 	};
 
 	// Handles user login
@@ -94,7 +100,7 @@ export function createHandlers(db: any) {
 	} 
 	catch (err) {
 		const payload = err instanceof Error ? { message: err.message, stack: err.stack } : { value: String(err) };
-		error('register error', payload);
+		fastify.log.error(payload, 'Error during user registration:');
 		return reply.status(500).send({ error:   'Server error' });
 	}
 	};

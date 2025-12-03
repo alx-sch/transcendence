@@ -1,11 +1,11 @@
-import { info } from '../utils/logger.js';
 import type { FastifyInstance } from "fastify";
 
 // Starts the backend server (Fastify instance) on port 3000.
-export const start = async (fastify: FastifyInstance) => {
+export async function start (fastify: FastifyInstance) {
   try {
-    await fastify.listen({ port: 3000 });
-	info('Server listening at http://localhost:3000');
+    // '0.0.0.0' to listen on all interfaces within Docker
+    await fastify.listen({ port: 3000, host: '0.0.0.0' });
+    fastify.log.info('Server listening on all interfaces on port 3000');
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

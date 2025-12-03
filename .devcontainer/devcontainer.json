@@ -15,7 +15,9 @@
         "dbaeumer.vscode-eslint", // For TypeScript linting
         "esbenp.prettier-vscode", // For code formatting
         "bradlc.vscode-tailwindcss", // For Tailwind CSS
-        "ms-azuretools.vscode-docker" // To manage your container
+        "ms-azuretools.vscode-docker", // Docker support
+        "matthewpi.caddyfile-support", // Caddyfile support
+        "jeff-hykin.better-dockerfile-syntax" // Dockerfile syntax
       ]
     }
   },
