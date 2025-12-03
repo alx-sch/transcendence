@@ -304,7 +304,7 @@ run-fe:
 # Starts production services via Docker Compose
 start:
 	@ if [ ! -d "${FRONTEND_FOLDER}/dist" ]; then \
-		echo "$(BOLD)$(YELLOW)--- Frontend build not found...$(RESET)"; \
+		echo "$(BOLD)$(YELLOW)Frontend build not found...$(RESET)"; \
 		$(MAKE) -s build-fe; \
 	fi
 
@@ -312,7 +312,7 @@ start:
 	$(DC) up -d --build
 	@echo "$(BOLD)$(GREEN)Production services started in detached mode.$(RESET)"
 	@echo ""
-	@echo "•   View logs:"
+	@echo "•   View live logs:"
 	@echo "    '$(YELLOW)$(DC) logs -f$(RESET)'"
 	@echo "•   Open the application:"
 	@echo "    '$(YELLOW)https://localhost:8443$(RESET)'"

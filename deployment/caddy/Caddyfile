@@ -4,11 +4,11 @@
 
 # Redirect HTTP to HTTPS
 localhost:80 {
-    redir https://{host}:8443{uri} 308
+    redir https://localhost:8443{uri} 308
 }
 
 # HTTPS site
-localhost:443 {
+localhost:8443 {
     # Use self-signed certs for dev
     tls internal
 
