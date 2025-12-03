@@ -1,0 +1,54 @@
+# ==================================
+# LOCAL PRODUCTION (visit localhost)
+# ==================================
+
+# Redirect HTTP (80) to HTTPS (8843) explicitly
+localhost:80 {
+    redir https://localhost:8443{uri} 308
+}
+
+# HTTPS Site Configuration
+localhost:8443 {
+    # Use self-signed certs for local production
+    tls internal
+
+    # ---------------------
+    # API Proxy to Backend Services
+    # ---------------------
+    # Match any request starting with '/api/user'
+    # Strip "/api-user", forward the rest to backend container (e.g., '/list')
+    handle_path /api-user/* {
+        reverse_proxy user-service:3000
+    }
+
+    # Add more API routes as needed:
+    # handle_path /api/registration* {
+    #     reverse_proxy registration-service:3333
+    # }
+
+    # ---------------------
+    # Frontend SPA
+    # ---------------------
+    # Serve static files if no API route matched
+    handle {
+        root * /srv/dist
+        try_files {path} /index.html
+        file_server
+    }
+}
+
+# ==================================
+# PRODUCTION (online:visit the domain)
+# ==================================
+
+# exotischkochen.de {
+#     handle_path /api/users* {
+#         reverse_proxy user-service:3000
+#     }
+
+#     handle {
+#         root * /srv/dist
+#         try_files {path} /index.html
+#         file_server
+#     }
+# }
