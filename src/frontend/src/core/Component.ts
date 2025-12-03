@@ -1,6 +1,6 @@
 export class Component extends HTMLElement {
   render(): string {
-    return "";
+    return '';
   }
   connectedCallback() {
     this.innerHTML = this.render();

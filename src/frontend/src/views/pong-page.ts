@@ -14,7 +14,7 @@ export class PongPage extends Component {
   private com = { x: 790, y: 250, score: 0, color: 'white' };
 
   render(): string {
-    return ` 
+    return `
         <section class="game-container" style="display:flex; flex-direction:column; align-items:center;">
           <div class="fixed top-4 right-4 flex items-center gap-2 z-50">
           <p id="login-status" class="p-2 bg-gray-800 text-white rounded shadow-md"></p>
@@ -104,17 +104,13 @@ export class PongPage extends Component {
     this.ball.y += this.ball.dy;
 
     // Wall Collision (Top/Bottom)
-    if (
-      this.ball.y + this.ball.radius > this.canvas.height ||
-      this.ball.y - this.ball.radius < 0
-    ) {
+    if (this.ball.y + this.ball.radius > this.canvas.height || this.ball.y - this.ball.radius < 0) {
       this.ball.dy = -this.ball.dy;
     }
 
     // Computer AI (Simple tracking)
     let computerLevel = 0.1;
-    this.com.y +=
-      (this.ball.y - (this.com.y + this.paddleHeight / 2)) * computerLevel;
+    this.com.y += (this.ball.y - (this.com.y + this.paddleHeight / 2)) * computerLevel;
 
     // Paddle Collision Logic (Simplified for brevity)
     let player = this.ball.x < this.canvas.width / 2 ? this.user : this.com;
@@ -140,36 +136,11 @@ export class PongPage extends Component {
     this.drawRect(0, 0, this.canvas.width, this.canvas.height, '#000');
 
     // Draw Elements
-    this.drawText(
-      this.user.score.toString(),
-      this.canvas.width / 4,
-      this.canvas.height / 5
-    );
-    this.drawText(
-      this.com.score.toString(),
-      (3 * this.canvas.width) / 4,
-      this.canvas.height / 5
-    );
-    this.drawRect(
-      this.user.x,
-      this.user.y,
-      this.paddleWidth,
-      this.paddleHeight,
-      this.user.color
-    );
-    this.drawRect(
-      this.com.x,
-      this.com.y,
-      this.paddleWidth,
-      this.paddleHeight,
-      this.com.color
-    );
-    this.drawCircle(
-      this.ball.x,
-      this.ball.y,
-      this.ball.radius,
-      this.ball.color
-    );
+    this.drawText(this.user.score.toString(), this.canvas.width / 4, this.canvas.height / 5);
+    this.drawText(this.com.score.toString(), (3 * this.canvas.width) / 4, this.canvas.height / 5);
+    this.drawRect(this.user.x, this.user.y, this.paddleWidth, this.paddleHeight, this.user.color);
+    this.drawRect(this.com.x, this.com.y, this.paddleWidth, this.paddleHeight, this.com.color);
+    this.drawCircle(this.ball.x, this.ball.y, this.ball.radius, this.ball.color);
 
     // Loop
     this.requestID = requestAnimationFrame(this.gameLoop);

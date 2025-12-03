@@ -1,6 +1,8 @@
 # Project-specific files to ignore
 README.md
 assets/
+*.tsbuildinfo
+dist/
 node_modules/
 
 # IDE and editor configuration
@@ -21,3 +23,6 @@ Thumbs.db
 
 #Database folder
 db/
+
+# Temp NFS files
+.nfs*

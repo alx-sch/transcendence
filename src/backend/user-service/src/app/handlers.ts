@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { error } from '../../logger.js';
+import { error } from '../utils/logger.js';
 
 /**
  * 

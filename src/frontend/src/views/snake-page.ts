@@ -1,24 +1,16 @@
 import { Component } from '../core/Component.js';
 import { logoutBtnHandler, updateLoginStatus } from '../utils/login-status.js';
 
-import {
-  Engine,
-  Scene,
-  Vector3,
-  ArcRotateCamera,
-  HemisphericLight,
-  PointLight,
-  MeshBuilder,
-  StandardMaterial,
-  Color3,
-  Mesh,
-  GlowLayer,
-} from '@babylonjs/core';
+// IMPORT TYPE ONLY (Does not download code yet)
+import type * as BABYLON from '@babylonjs/core';
 
 export class SnakePage extends Component {
   private canvas: HTMLCanvasElement | null = null;
-  private engine: Engine | null = null;
-  private scene: Scene | null = null;
+  private engine: BABYLON.Engine | null = null;
+  private scene: BABYLON.Scene | null = null;
+
+  // This holds the loaded library
+  private B: any | null = null;
 
   // --- GAME CONFIGURATION ---
   private arenaWidth = 60;
@@ -27,14 +19,14 @@ export class SnakePage extends Component {
   private turnSpeed = 0.06;
 
   // --- GAME STATE ---
-  private head: Mesh | null = null;
-  private headLight: PointLight | null = null;
+  private head: BABYLON.Mesh | null = null;
+  private headLight: BABYLON.PointLight | null = null;
   private direction: number = 0;
   private inputMap: Record<string, boolean> = {};
 
   // --- TRAIL SYSTEM ---
-  private lastPosition: Vector3 | null = null;
-  private allTrails: Mesh[] = [];
+  private lastPosition: BABYLON.Vector3 | null = null;
+  private allTrails: BABYLON.Mesh[] = [];
 
   render(): string {
     return `
@@ -48,15 +40,19 @@ export class SnakePage extends Component {
         <h1 class="text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-green-500" style="text-shadow: 0 0 10px rgba(0,255,255,0.5);">
             NEON SNAKE 3D
         </h1>
-        
-        <div style="position: relative; width: 1000px; height: 600px; border: 4px solid #333; box-shadow: 0 0 30px rgba(0,0,0,0.9);">
+
+        <div class="relative w-full max-w-5xl aspect-video border-4 border-gray-800 shadow-2xl">
             <canvas id="renderCanvas" style="width: 100%; height: 100%; outline: none; cursor: grab;"></canvas>
-            
+
+            <div id="loader" class="absolute inset-0 flex items-center justify-center bg-black z-50 text-white font-mono">
+                Loading 3D Engine...
+            </div>
+
             <div id="deathMsg" class="absolute top-1/2 left-0 w-full text-center text-red-500 font-bold text-6xl hidden" style="text-shadow: 0 0 20px red; transform: translateY(-50%); pointer-events: none;">
                 CRASHED!
             </div>
         </div>
-        
+
         <p class="text-gray-400 mt-4 text-center">
            <b>Arrow Keys</b> to turn.<br>
            <b>Mouse Drag</b> to rotate view. <b>Scroll</b> to zoom.
@@ -65,7 +61,7 @@ export class SnakePage extends Component {
     `;
   }
 
-  connectedCallback() {
+  async connectedCallback() {
     this.innerHTML = this.render();
     this.canvas = this.querySelector('#renderCanvas');
 
@@ -77,19 +73,54 @@ export class SnakePage extends Component {
     logoutBtn.addEventListener('click', logoutBtnHandler.bind(null, status));
 
     if (this.canvas) {
-      this.engine = new Engine(this.canvas, true);
-      this.createScene();
-      this.setupInput();
+      try {
+        // 1. LOAD THE CHUNK MANUALLY
+        const { Engine, Scene, Vector3, ArcRotateCamera, HemisphericLight, PointLight, MeshBuilder, StandardMaterial, Color3, GlowLayer } = await import('@babylonjs/core');
 
-      this.engine.runRenderLoop(() => {
-        if (this.scene) {
-          this.updateGameLogic();
-          this.scene.render();
-        }
-      });
+        this.B = {
+          Engine,
+          Scene,
+          Vector3,
+          ArcRotateCamera,
+          HemisphericLight,
+          PointLight,
+          MeshBuilder,
+          StandardMaterial,
+          Color3,
+          GlowLayer,
+        };
 
-      window.addEventListener('resize', this.handleResize);
+        // 2. HIDE LOADER
+        const loader = this.querySelector('#loader');
+        if (loader) loader.remove();
+
+        // 3. START GAME (Now that we have the library)
+        this.initGame();
+      } catch (error) {
+        console.error('Failed to load 3D engine:', error);
+      }
     }
+  }
+
+  // --- ADDED THIS MISSING METHOD ---
+  private initGame() {
+    // Safety check: Ensure library (B) and canvas exist
+    if (!this.B || !this.canvas) return;
+    const B = this.B; // Shortcut
+
+    this.engine = new B.Engine(this.canvas, true);
+    this.createScene();
+    this.setupInput();
+
+    if (!this.engine) return;
+    this.engine.runRenderLoop(() => {
+      if (this.scene) {
+        this.updateGameLogic();
+        this.scene.render();
+      }
+    });
+
+    window.addEventListener('resize', this.handleResize);
   }
 
   disconnectedCallback() {
@@ -104,125 +135,99 @@ export class SnakePage extends Component {
     this.engine?.resize();
   };
 
+  private handleKeyDown = (evt: KeyboardEvent) => {
+    this.inputMap[evt.key] = true;
+  };
+
+  private handleKeyUp = (evt: KeyboardEvent) => {
+    this.inputMap[evt.key] = false;
+  };
+
   private setupInput() {
-    window.addEventListener('keydown', (evt) => {
-      this.inputMap[evt.key] = true;
-    });
-    window.addEventListener('keyup', (evt) => {
-      this.inputMap[evt.key] = false;
-    });
+    window.addEventListener('keydown', this.handleKeyDown);
+    window.addEventListener('keyup', this.handleKeyUp);
   }
 
   private createScene() {
-    this.scene = new Scene(this.engine!);
-    this.scene.clearColor = new Color3(0.05, 0.05, 0.08).toColor4();
+    if (!this.engine || !this.B) return;
+    const B = this.B; // IMPORTANT: Use this shortcut!
 
-    // 1. GLOW LAYER
-    const gl = new GlowLayer('glow', this.scene);
+    this.scene = new B.Scene(this.engine);
+
+    if (!this.scene) return;
+    this.scene.clearColor = new B.Color3(0.05, 0.05, 0.08).toColor4();
+
+    const gl = new B.GlowLayer('glow', this.scene);
     gl.intensity = 0.7;
 
-    // 2. CAMERA (ArcRotateCamera for Mouse Control)
-    // Parameters: Name, Alpha, Beta, Radius, Target, Scene
-    const camera = new ArcRotateCamera(
-      'camera1',
-      -Math.PI / 2, // Face "North"
-      0.6,
-      65, // Distance from center
-      new Vector3(0, 0, 0),
-      this.scene
-    );
+    const camera = new B.ArcRotateCamera('camera1', -Math.PI / 2, 0.6, 65, new B.Vector3(0, 0, 0), this.scene);
 
-    // Attach controls so mouse works
     camera.attachControl(this.canvas, true);
-
-    // Disable Keys (We want Arrow Keys for Snake, NOT Camera)
     camera.keysUp = [];
     camera.keysDown = [];
     camera.keysLeft = [];
     camera.keysRight = [];
-
-    // Limits to keep camera sane
     camera.lowerRadiusLimit = 20;
     camera.upperRadiusLimit = 150;
     camera.lowerBetaLimit = 0.1;
 
-    // 3. LIGHTING
-    const light = new HemisphericLight(
-      'light1',
-      new Vector3(0, 1, 0),
-      this.scene
-    );
+    const light = new B.HemisphericLight('light1', new B.Vector3(0, 1, 0), this.scene);
     light.intensity = 0.6;
 
-    // 4. GROUND (Wireframe Grid)
-    const ground = MeshBuilder.CreateGround(
-      'ground',
-      {
-        width: this.arenaWidth,
-        height: this.arenaHeight,
-        subdivisions: 20,
-      },
-      this.scene
-    );
+    const ground = B.MeshBuilder.CreateGround('ground', { width: this.arenaWidth, height: this.arenaHeight, subdivisions: 20 }, this.scene);
 
-    const matGround = new StandardMaterial('matGround', this.scene);
-    matGround.diffuseColor = new Color3(0.1, 0.1, 0.2);
+    const matGround = new B.StandardMaterial('matGround', this.scene);
+    matGround.diffuseColor = new B.Color3(0.1, 0.1, 0.2);
     matGround.wireframe = true;
     ground.material = matGround;
 
-    // 5. BORDER
     this.createBorders();
 
-    // 6. TRAIL MATERIAL
-    const matTrail = new StandardMaterial('matTrail', this.scene);
-    matTrail.diffuseColor = new Color3(0, 1, 0);
-    matTrail.emissiveColor = new Color3(0, 1, 0);
+    const matTrail = new B.StandardMaterial('matTrail', this.scene);
+    matTrail.diffuseColor = new B.Color3(0, 1, 0);
+    matTrail.emissiveColor = new B.Color3(0, 1, 0);
 
     this.createHead();
   }
 
   private createBorders() {
+    if (!this.B || !this.scene) return;
+    const B = this.B;
+
     const w = this.arenaWidth / 2;
     const h = this.arenaHeight / 2;
 
-    const borderPoints = [
-      new Vector3(-w, 0, h),
-      new Vector3(w, 0, h),
-      new Vector3(w, 0, -h),
-      new Vector3(-w, 0, -h),
-      new Vector3(-w, 0, h),
-    ];
+    const borderPoints = [new B.Vector3(-w, 0, h), new B.Vector3(w, 0, h), new B.Vector3(w, 0, -h), new B.Vector3(-w, 0, -h), new B.Vector3(-w, 0, h)];
 
-    const border = MeshBuilder.CreateLines(
-      'border',
-      { points: borderPoints },
-      this.scene
-    );
-    border.color = new Color3(0, 0.5, 1);
+    const border = B.MeshBuilder.CreateLines('border', { points: borderPoints }, this.scene);
+    border.color = new B.Color3(0, 0.5, 1);
   }
 
   private createHead() {
+    // Safety check for library
+    if (!this.B || !this.scene) return;
+    const B = this.B;
+
+    // Clean up old objects
     if (this.head) this.head.dispose();
     if (this.headLight) this.headLight.dispose();
 
-    this.head = MeshBuilder.CreateSphere('head', { diameter: 1 }, this.scene);
-    this.head.position = new Vector3(0, 0.5, 0);
+    // Create Head Mesh
+    this.head = B.MeshBuilder.CreateSphere('head', { diameter: 1 }, this.scene);
+    if (!this.head) return;
+    this.head.position = new B.Vector3(0, 0.5, 0);
 
-    const matHead = new StandardMaterial('matHead', this.scene);
-    matHead.diffuseColor = new Color3(1, 1, 1);
-    matHead.emissiveColor = new Color3(1, 1, 1);
+    const matHead = new B.StandardMaterial('matHead', this.scene);
+    matHead.diffuseColor = new B.Color3(1, 1, 1);
+    matHead.emissiveColor = new B.Color3(1, 1, 1);
     this.head.material = matHead;
 
-    // Dynamic Light on Head
-    this.headLight = new PointLight(
-      'headLight',
-      new Vector3(0, 2, 0),
-      this.scene
-    );
-    this.headLight.parent = this.head;
-    this.headLight.diffuse = new Color3(0, 1, 0);
-    this.headLight.intensity = 0.5;
-    this.headLight.range = 20;
+    const light = new B.PointLight('headLight', new B.Vector3(0, 2, 0), this.scene);
+    light.parent = this.head;
+    light.diffuse = new B.Color3(0, 1, 0);
+    light.intensity = 0.5;
+    light.range = 20;
+    this.headLight = light;
 
     this.direction = 0;
     this.lastPosition = this.head.position.clone();
@@ -241,7 +246,8 @@ export class SnakePage extends Component {
   }
 
   private updateGameLogic() {
-    if (!this.head || !this.scene || !this.lastPosition) return;
+    if (!this.head || !this.scene || !this.lastPosition || !this.B) return;
+    const B = this.B;
 
     // 1. Turn
     if (this.inputMap['ArrowLeft']) this.direction -= this.turnSpeed;
@@ -276,10 +282,8 @@ export class SnakePage extends Component {
     }
 
     // 4. Collision Check
-    // Safe Zone: Don't check the last 15 segments (the tail right behind you)
     const safeZone = 15;
     const limit = this.allTrails.length - safeZone;
-
     for (let i = 0; i < limit; i++) {
       if (this.head.intersectsMesh(this.allTrails[i], true)) {
         this.resetGame();
@@ -291,12 +295,13 @@ export class SnakePage extends Component {
     if (didTeleport) {
       this.lastPosition = this.head.position.clone();
     } else {
-      const segment = MeshBuilder.CreateTube(
+      // NOTE: B.MeshBuilder used here
+      const segment = B.MeshBuilder.CreateTube(
         'trail',
         {
           path: [this.lastPosition, this.head.position],
           radius: 0.4,
-          tessellation: 4, // Low detail square tube is faster
+          tessellation: 4,
           cap: 0,
           updatable: false,
         },

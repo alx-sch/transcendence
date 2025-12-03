@@ -4,7 +4,10 @@ import type { FastifyInstance } from "fastify";
 import formbody from '@fastify/formbody';
 import fastifyCookie from "@fastify/cookie";
 import fastifySession from "@fastify/session";
-import { error } from '../../logger.js';
+import { error } from '../utils/logger.js';
+
+// Create and configure Fastify server instance (with cookie and session support).
+// @returns Configured Fastify instance.
 
 export async function createFastifyServer(): Promise<FastifyInstance> {
 

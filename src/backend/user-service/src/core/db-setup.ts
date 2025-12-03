@@ -1,16 +1,19 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { info, warn } from '../../logger.js';
+import { info, warn } from '../utils/logger.js';
 import Database from 'better-sqlite3';
 import BetterSqlite3 from 'better-sqlite3';
+
+// Setup and return the BetterSqlite3 database connection 
+// (creates file if missing, applies schema, seeds data if table is empty).
 
 export function setupDatabase(): BetterSqlite3.Database {
 	// __filename and __dirname in ESM
 	const __filename = fileURLToPath(import.meta.url);
 	const __dirname = path.dirname(__filename);
 	
-	const dbDir = path.join(__dirname, '../db');
+	const dbDir = path.join(__dirname, '../../db');
 	const dbFile = path.join(dbDir, 'app.sqlite');
 	
 	const isDev = process.env.NODE_ENV !== 'production';
