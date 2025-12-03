@@ -5,9 +5,9 @@ export class Websocket extends Component {
     return `
       <section class="p-8">
         <h1 class="text-2xl font-bold mb-4">Websocket page</h1>
-        <p>
-          Open the console in the dev tools
-        </p>
+        <div id="messages" class="mt-4 p-2 border"></div>
+        <input id="chat-input" class="border p-2 flex-1" placeholder="Type a message…" />
+        <button id="send" class="ml-2 border p-2">Send</button>
       </section>
     `;
   }
@@ -18,14 +18,27 @@ export class Websocket extends Component {
   }
 
   initWebsocket() {
-    const ws = new WebSocket('ws://localhost:3000/');
+    const ws = new WebSocket('ws://localhost:3000/chat');
+    const messagesDiv = document.getElementById('messages');
+    const input = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send');
+
+    sendBtn?.addEventListener('click', (el) => {
+      const text = input.value;
+      if (text) {
+        ws.send(text);
+        input.value = '';
+      }
+    });
 
     ws.onopen = () => {
       ws.send('hi from client');
     };
 
     ws.onmessage = (msg) => {
-      console.log('server says:', msg.data);
+      const p = document.createElement('p');
+      p.textContent = 'Server: ' + msg.data;
+      messagesDiv.appendChild(p);
     };
   }
 }
