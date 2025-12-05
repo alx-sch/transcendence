@@ -5,10 +5,10 @@ export default defineConfig({
   plugins: [tailwindcss()],
   server: {
     proxy: {
-      '/api': {
+      '/api-user': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/api-user/, ''),
       },
     },
   },
@@ -18,6 +18,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // This function tells Vite how to split the files
+        // So website doesn't have to load everything at once when starting
         manualChunks(id) {
           // Check if the file is in node_modules (dependencies)
           if (id.includes('node_modules')) {
