@@ -1,10 +1,10 @@
 import { Component } from '../core/Component.js';
 
-export class Websocket extends Component {
+export class Chat extends Component {
   render(): string {
     return `
       <section class="p-8">
-        <h1 class="text-2xl font-bold mb-4">Websocket page</h1>
+        <h1 class="text-2xl font-bold mb-4">Chat page</h1>
         <div id="messages" class="mt-4 p-2 border"></div>
         <input id="chat-input" class="border p-2 flex-1" placeholder="Type a message…" />
         <button id="send" class="ml-2 border p-2">Send</button>
@@ -18,7 +18,7 @@ export class Websocket extends Component {
   }
 
   initWebsocket() {
-    const ws = new WebSocket('ws://localhost:3000/chat');
+    const ws = new WebSocket('ws://localhost:3001/chat');
     const messagesDiv = document.getElementById('messages');
     const input = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send');
@@ -43,4 +43,4 @@ export class Websocket extends Component {
   }
 }
 
-customElements.define('websocket-page', Websocket);
+customElements.define('chat-page', Chat);

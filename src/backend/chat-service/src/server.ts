@@ -2,12 +2,11 @@ import Fastify from 'fastify';
 import websocket from '@fastify/websocket';
 import type { WebSocket } from 'ws';
 
-const fastify = Fastify();
+const fastify = Fastify({ logger: true });
 fastify.register(websocket);
 
 const clients = new Set<WebSocket>();
 fastify.register(async function (fastify) {
-  // Routes
   fastify.get('/chat', { websocket: true }, (socket, req) => {
     clients.add(socket);
     socket.on('message', (message) => {
@@ -19,8 +18,7 @@ fastify.register(async function (fastify) {
     return { hello: 'world' };
   });
 });
-
-fastify.listen({ port: 3000 }, (err) => {
+fastify.listen({ port: 3001 }, (err) => {
   if (err) {
     fastify.log.error(err);
     process.exit(1);

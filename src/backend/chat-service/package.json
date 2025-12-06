@@ -1,0 +1,21 @@
+{
+  "name": "chat-service",
+  "version": "1.0.0",
+  "description": "Handles chat logic",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/server.ts"
+  },
+  "type": "module",
+  "dependencies": {
+    "@fastify/websocket": "^11.2.0",
+    "fastify": "^5.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
