@@ -17,7 +17,8 @@
         "bradlc.vscode-tailwindcss", // For Tailwind CSS
         "ms-azuretools.vscode-docker", // Docker support
         "matthewpi.caddyfile-support", // Caddyfile support
-        "jeff-hykin.better-dockerfile-syntax" // Dockerfile syntax
+        "jeff-hykin.better-dockerfile-syntax", // Dockerfile syntax
+        "runem.lit-plugin" // Lit HTML support
       ]
     }
   },
