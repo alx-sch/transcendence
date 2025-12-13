@@ -1,4 +1,4 @@
-import { Component } from "../core/Component.js";
+import { Component } from '../core/Component.js';
 import { logoutBtnHandler, updateLoginStatus } from '../utils/login-status.js';
 
 export class TicTacToe extends Component {
@@ -30,14 +30,14 @@ export class TicTacToe extends Component {
 
   connectedCallback() {
     super.connectedCallback(); // this runs render()
-        
+
     // Update login status and add logout button handler
     const status = this.querySelector<HTMLElement>('#login-status'); // Stores an element (<p id="login-status" class="text-sm mt-2">).
     const logoutBtn = this.querySelector<HTMLButtonElement>('#logout-btn'); // Target logout button element
     if (!status || !logoutBtn) return;
     updateLoginStatus(status);
     logoutBtn.addEventListener('click', logoutBtnHandler.bind(null, status));
-    
+
     this.initGame();
   }
 

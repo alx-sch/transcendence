@@ -12,4 +12,4 @@ const isDev = process.env.NODE_ENV === 'development'; // Determine if in develop
 const fastify = await createFastifyServer(isDev); // Create Fastify server instance
 const db = setupDatabase(isDev, fastify); // Set up and get the database instance
 registerUserRoutes(fastify, db); // Whenever a request comes in for /user/*, it will be handled by the user routes
-start(fastify);	// Start the server
+start(fastify); // Start the server

@@ -50,7 +50,7 @@ export class PongPage3d extends Component {
     if (!status || !logoutBtn) return;
     updateLoginStatus(status);
     logoutBtn.addEventListener('click', logoutBtnHandler.bind(null, status));
-  
+
     if (this.canvas) {
       // 1. Init Babylon Engine
       this.engine = new Engine(this.canvas, true);

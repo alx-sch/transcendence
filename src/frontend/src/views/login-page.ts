@@ -3,7 +3,7 @@ import { logoutBtnHandler, updateLoginStatus } from '../utils/login-status.js';
 
 export class LoginPage extends Component {
   render(): string {
-  return `
+    return `
     <main class="p-8">
       <section class="login-page max-w-md mx-auto flex flex-col gap-3">
         <h1 class="text-2xl font-bold mb-2">Log in</h1>
@@ -31,12 +31,13 @@ export class LoginPage extends Component {
     </main>
   `;
   }
-  connectedCallback(): void { // The connectedCallback() lifecycle hook fires when a component is inserted into the DOM.
-    
+  connectedCallback(): void {
+    // The connectedCallback() lifecycle hook fires when a component is inserted into the DOM.
+
     // 1. Call the render() method to generate the predefined HTML content for the component.
-    this.innerHTML = this.render(); // The render() method is typically responsible for generating the HTML markup that represents the current state or content of the component. 
+    this.innerHTML = this.render(); // The render() method is typically responsible for generating the HTML markup that represents the current state or content of the component.
     // When called, it returns a string of HTML.
-  
+
     // 2. Stores the HTML "login form" element properties in a JavaScript class variable, and the HTML <p id="reg-msg">, used for outputting messages to the user.
     const form = this.querySelector<HTMLFormElement>('#login-form');
     const msg = this.querySelector<HTMLElement>('#login-msg');
@@ -46,38 +47,41 @@ export class LoginPage extends Component {
 
     // Gets called initially to display current login state
     updateLoginStatus(status);
-  
+
     // Logout button handler
     logoutBtn.addEventListener('click', logoutBtnHandler.bind(null, status));
 
     // 3. Defines an asynchronous function onSubmit to handle the form submission event (will not be called immediately, but when the user hits "enter" or clicks "log in").
-  
+
     // 3.1. Sets up initial settings.
-    const onSubmit = async (ev: Event) => { // Since JavaScript is single-threaded, it uses an event-driven, non-blocking I/O model to handle operations like network requests asynchronously.
+    const onSubmit = async (ev: Event) => {
+      // Since JavaScript is single-threaded, it uses an event-driven, non-blocking I/O model to handle operations like network requests asynchronously.
       ev.preventDefault(); // Prevents the default form submission behavior (which would reload the page, which we don't want).
       msg.textContent = '';
       msg.style.color = 'red';
-    
-    // 3.2. Retrieves form data input by the user.
+
+      // 3.2. Retrieves form data input by the user.
       const fd = new FormData(form);
       const username = String(fd.get('username') || '');
       const password = String(fd.get('password') || '');
-    
-    // 3.3 Validates the input and sends an error message if the input is invalid.
+
+      // 3.3 Validates the input and sends an error message if the input is invalid.
       if (!username || !password) {
         msg.textContent = 'Please fill out username and password fields.';
         return;
       }
-    
-    // 3.4 Sends the login request to the server.
+
+      // 3.4 Sends the login request to the server.
       try {
-        const res = await fetch('/api-user/login', { // Sends a POST request to the server at the endpoint '/api/login' using the Fetch API.
+        const res = await fetch('/api-user/login', {
+          // Sends a POST request to the server at the endpoint '/api/login' using the Fetch API.
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password }),
         });
 
-        if (res.status === 200) { // If the server responds with a status code of 200 (OK), it indicates that the login was successful.
+        if (res.status === 200) {
+          // If the server responds with a status code of 200 (OK), it indicates that the login was successful.
           msg.style.color = 'green';
           msg.textContent = 'You are now logged in.';
           updateLoginStatus(status);
@@ -100,7 +104,8 @@ export class LoginPage extends Component {
     (this as any).__cleanup = () => form.removeEventListener('submit', onSubmit);
   }
 
-  disconnectedCallback(): void { // The disconnectedCallback() lifecycle hook fires when a component is removed or hidden from the DOM.
+  disconnectedCallback(): void {
+    // The disconnectedCallback() lifecycle hook fires when a component is removed or hidden from the DOM.
     const c = (this as any).__cleanup; // Retrieves the cleanup function stored in the component instance during connectedCallback.
     if (typeof c === 'function') c(); // If the cleanup function exists and is a function, it calls it to remove any event listeners or perform other cleanup tasks to prevent memory leaks.
   }

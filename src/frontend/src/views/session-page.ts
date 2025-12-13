@@ -38,7 +38,7 @@ export class SessionPage extends Component {
         this.loginIdEl.textContent = `User ID: ${data.user.id}`;
         this.loginStatusEl.textContent = `Logged in as: ${data.user.username}`;
         this.loginStatusEl.style.color = 'green';
-		console.log('Session data:', data);
+        console.log('Session data:', data);
       } else {
         this.loginIdEl.textContent = '';
         this.loginStatusEl.textContent = 'Not logged in';
