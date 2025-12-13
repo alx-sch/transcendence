@@ -71,7 +71,7 @@ export class LoginPage extends Component {
     
     // 3.4 Sends the login request to the server.
       try {
-        const res = await fetch('/api/login', { // Sends a POST request to the server at the endpoint '/api/login' using the Fetch API.
+        const res = await fetch('/api-user/login', { // Sends a POST request to the server at the endpoint '/api/login' using the Fetch API.
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password }),

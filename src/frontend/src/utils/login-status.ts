@@ -2,7 +2,7 @@ export async function updateLoginStatus(status: HTMLElement) { // Updates login 
     if (!status) return;
 
     try {
-	const res = await fetch('/api/session');
+	const res = await fetch('/api-user/session');
 	const data = await res.json();
 	if (data.loggedIn) {
 		let username = data.user.username;
@@ -28,7 +28,7 @@ export async function updateLoginStatus(status: HTMLElement) { // Updates login 
 
 export async function logoutBtnHandler (status: HTMLElement) { // Handles logout button click
     try {
-      const res = await fetch('/api/logout', { method: 'POST' });
+      const res = await fetch('/api-user/logout', { method: 'POST' });
       if (res.ok) {
         status.textContent = 'Not logged in';
         updateLoginStatus(status); // Refresh the login status display

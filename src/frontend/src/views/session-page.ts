@@ -19,7 +19,7 @@ export class SessionPage extends Component {
   connectedCallback(): void {
     this.innerHTML = this.render();
 
-    // ✅ Save references in class properties
+    // Save references in class properties
     this.loginIdEl = this.querySelector<HTMLElement>('#login-id')!;
     this.loginStatusEl = this.querySelector<HTMLElement>('#login-status')!;
 
@@ -31,13 +31,14 @@ export class SessionPage extends Component {
     if (!this.loginIdEl || !this.loginStatusEl) return;
 
     try {
-      const res = await fetch('/api/session'); // GET session route on backend
+      const res = await fetch('/api-user/session'); // GET session route on backend
       const data = await res.json();
 
       if (data.loggedIn) {
         this.loginIdEl.textContent = `User ID: ${data.user.id}`;
         this.loginStatusEl.textContent = `Logged in as: ${data.user.username}`;
         this.loginStatusEl.style.color = 'green';
+		console.log('Session data:', data);
       } else {
         this.loginIdEl.textContent = '';
         this.loginStatusEl.textContent = 'Not logged in';

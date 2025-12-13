@@ -61,7 +61,7 @@ export class RegisterPage extends Component { // This defines a new JS class Reg
     
     // 3.3 Sends the registration data to the server using the Fetch API, and handles the server's response.
       try { // Tries to execute the code inside the block. If an error occurs, it jumps to the catch block.
-        const res = await fetch('/api/register', { // Sends a POST request to the server at the endpoint '/api/register' using the Fetch API.
+        const res = await fetch('/api-user/register', { // Sends a POST request to the server at the endpoint '/api/register' using the Fetch API.
           method: 'POST', // Specifies that the request method is POST, which is typically used to submit data to be processed to a specified resource.
           headers: { 'Content-Type': 'application/json' }, // Sets the Content-Type header to 'application/json', indicating that the request body contains JSON data.
           body: JSON.stringify({ username, email, password }), // Converts the JavaScript object containing username, email, and password into a JSON string to be sent in the request body.
