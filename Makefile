@@ -95,6 +95,15 @@ lint:
 	pnpm run lint;
 	@echo "$(BOLD)$(GREEN)Linting complete.$(RESET)"
 
+format:
+	@echo "$(BOLD)$(YELLOW)--- Formating...$(RESET)"
+	@if [ ! -d "node_modules/" ]; then \
+		echo "Dependencies missing — installing packages..."; \
+		$(MAKE) -s install;\
+	fi
+	pnpm run format;
+	@echo "$(BOLD)$(GREEN)Formating complete.$(RESET)"
+
 # 'clean' + 'clean-db' + stops all running containers and remove all Docker resources system-wide
 purge:	clean clean-db clean-backup
 	@echo "$(BOLD)$(RED)SYSTEM-WIDE PURGE: Removing All Docker Resources...$(RESET)"

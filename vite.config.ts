@@ -6,10 +6,11 @@ export default defineConfig({
   root: 'src/frontend',
   plugins: [react()],
 
-resolve: {
+  resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src/frontend/src"),
-    }},
+      '@': path.resolve(__dirname, './src/frontend/src'),
+    },
+  },
   server: {
     proxy: {
       '/api-user': {

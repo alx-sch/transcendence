@@ -1,33 +1,45 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState } from 'react';
 
 interface User {
-  id: number
-  name: string
-  email: string
+  id: number;
+  name: string;
+  email: string;
 }
 
 export default function Login() {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetch('/api-user/list')
       .then((res) => res.json())
       .then((data: User[]) => {
-        setUsers(data)
-        setLoading(false)
+        setUsers(data);
+        setLoading(false);
       })
       .catch((err) => {
-        console.error(err)
-        setError(true)
-        setLoading(false)
-      })
-  }, [])
+        console.error(err);
+        setError(true);
+        setLoading(false);
+      });
+  }, []);
 
   // Conditional Rendering
-  if (loading) return <main className="p-8"><h1>Users</h1><p>Loading...</p></main>
-  if (error) return <main className="p-8"><h1>Users</h1><p>Failed to load users.</p></main>
+  if (loading)
+    return (
+      <main className="p-8">
+        <h1>Users</h1>
+        <p>Loading...</p>
+      </main>
+    );
+  if (error)
+    return (
+      <main className="p-8">
+        <h1>Users</h1>
+        <p>Failed to load users.</p>
+      </main>
+    );
 
   return (
     <main className="p-8">
@@ -40,5 +52,5 @@ export default function Login() {
         ))}
       </ul>
     </main>
-  )
+  );
 }

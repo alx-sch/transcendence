@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   // Ignore build and config files
@@ -11,6 +12,9 @@ export default tseslint.config(
   // Base Config
   js.configs.recommended,
   ...tseslint.configs.recommended,
+
+  // 2. Add Prettier Config LAST to override conflicting rules
+  eslintConfigPrettier,
 
   // Specific rules
   {

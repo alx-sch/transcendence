@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
   return (
@@ -7,10 +7,8 @@ export default function Home() {
       <p className="text-gray-700 mb-6">
         Welcome to your new single-page application. This is the home page.
       </p>
-      
-      <Button onClick={() => alert("You clicked the shadcn button!")}>
-        Shadcn Button
-      </Button>
+
+      <Button onClick={() => alert('You clicked the shadcn button!')}>Shadcn Button</Button>
     </section>
-  )
+  );
 }

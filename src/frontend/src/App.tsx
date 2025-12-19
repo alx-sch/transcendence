@@ -1,7 +1,7 @@
-import { Routes, Route } from 'react-router-dom'
-import { AppNavigation } from '@/components/AppNavigation'
-import Home from './views/Home'
-import Login from './views/Login'
+import { Routes, Route } from 'react-router-dom';
+import { AppNavigation } from '@/components/AppNavigation';
+import Home from './views/Home';
+import Login from './views/Login';
 
 function App() {
   return (
@@ -16,7 +16,7 @@ function App() {
         </Routes>
       </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
