@@ -11,20 +11,21 @@ export default function Login() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  // useEffect(() => {
-  //   fetch('/api-user/list')
-  //     .then((res) => res.json())
-  //     .then((data: User[]) => {
-  //       setUsers(data)
-  //       setLoading(false)
-  //     })
-  //     .catch((err) => {
-  //       console.error(err)
-  //       setError(true)
-  //       setLoading(false)
-  //     })
-  // }, [])
-  //
+  useEffect(() => {
+    fetch('/api-user/list')
+      .then((res) => res.json())
+      .then((data: User[]) => {
+        setUsers(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error(err)
+        setError(true)
+        setLoading(false)
+      })
+  }, [])
+
+  // Conditional Rendering
   if (loading) return <main className="p-8"><h1>Users</h1><p>Loading...</p></main>
   if (error) return <main className="p-8"><h1>Users</h1><p>Failed to load users.</p></main>
 
