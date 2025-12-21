@@ -1,29 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useUserStore } from '@/store/useUserStore';
 import { useDebounce } from '@/hooks/useDebounce';
 
 export default function Users() {
   const { users, loading, error, fetchUsers } = useUserStore();
   const [searchTerm, setSearchTerm] = useState('');
-
   const debouncedSearch = useDebounce(searchTerm, 500);
 
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+  }, []);
 
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(debouncedSearch.toLowerCase())
-  );
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => user.name.toLowerCase().includes(debouncedSearch.toLowerCase()));
+  }, [users, debouncedSearch]);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error loading users.</div>;
+  if (loading) {
+    return (
+      <main className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Users</h1>
+        <p className="text-gray-500">Loading...</p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Users</h1>
+        <div className="p-4 bg-red-50 text-red-600 rounded border border-red-200">
+          Error: {error}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="p-8">
       <h1 className="text-2xl font-bold mb-4">Users</h1>
 
-      {/* Search Input */}
       <input
         type="text"
         placeholder="Search users..."
