@@ -1,0 +1,53 @@
+// Install REST Client by Huachao Mao in VSCode to send these off from here
+
+// ========== BASIC SERVER ========== //
+
+// See if server is alive and kicking
+http://localhost:3000
+###
+
+
+// ========== USERS ========== //
+
+// Create new user
+POST http://localhost:3000/users HTTP/1.1
+content-type: application/json
+
+{
+    "name": "user6",
+    "email": "user6@asdfasdfe3.de"
+}
+###
+
+
+// ========== POSTS ========== //
+
+// Get all posts
+http://localhost:3000/posts
+###
+
+// Get post by post id
+http://localhost:3000/posts/1
+###
+
+// Search for post by string
+http://localhost:3000/posts?search=Hello
+###
+
+// Create post
+POST http://localhost:3000/posts HTTP/1.1
+content-type: application/json
+
+{
+    "title": "Hello World",
+    "authorEmail": "alice@prisma.io"
+}
+###
+
+// Publish post
+PUT http://localhost:3000/posts/5/publish
+###
+
+// Delete post
+DELETE http://localhost:3000/posts/5 HTTP/1.1
+###
