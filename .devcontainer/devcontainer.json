@@ -19,7 +19,8 @@
         "matthewpi.caddyfile-support", // Caddyfile
         "jeff-hykin.better-dockerfile-syntax", // Dockerfile syntax
         "dsznajder.es7-react-js-snippets", // React snippets
-        "johnpapa.vscode-zustand-snippets" // Zustand snippets
+        "johnpapa.vscode-zustand-snippets", // Zustand snippets
+        "humao.rest-client" // REST cliet: Execute HTTP requests directly in vscode (backend/test/routes.http)
       ]
     }
   },

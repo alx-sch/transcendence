@@ -93,6 +93,10 @@ purge:	clean clean-db clean-backup
 	@docker system df
 	@echo "$(BOLD)$(GREEN)All Docker resources have been purged.$(RESET)"
 
+# Shows live logs of Docker services running (in the background)
+logs:
+	$(DC) logs -f
+
 #############################
 ## 🚀 DEVELOPMENT COMMANDS ##
 #############################
@@ -107,6 +111,36 @@ stop-dev:
 	-@pkill -f "pnpm" 2>/dev/null || true
 	-@pkill -f "vite" 2>/dev/null || true
 	@echo "$(BOLD)$(GREEN)Workspace processes stopped.$(RESET)"
+
+#############################
+## 📁 DATABASE (LOCAL DEV) ##
+#############################
+
+# Starts only the database Docker container for local development
+db: install
+	@echo "$(BOLD)$(YELLOW)--- Starting Postgres [DOCKER]...$(RESET)"
+	$(DC) up -d db
+	@echo "$(BOLD)$(YELLOW)--- Waiting for DB to wake up...$(RESET)"
+	@sleep 3
+	@pnpm --filter @grit/backend exec prisma db push
+	@echo "$(BOLD)$(GREEN)Database is ready and schema is synced.$(RESET)"
+	@echo "•   View logs:  '$(YELLOW)make logs$(RESET)'"
+	@echo "•   DB Browser: '$(YELLOW)make view-db$(RESET)'"
+
+# Populates the database with initial test data
+seed-db:
+	@echo "$(BOLD)$(YELLOW)--- Seeding Database...$(RESET)"
+	@pnpm --filter @grit/backend exec prisma db seed
+
+# Opens the Prisma Studio GUI for database management
+view-db:
+	@echo "$(BOLD)$(YELLOW)--- Opening Prisma Studio...$(RESET)"
+	@cd $(BACKEND_FOLDER) && npx prisma studio
+
+# Stops the database container
+stop-db:
+	@echo "$(BOLD)$(YELLOW)--- Stopping Database services...$(RESET)"
+	$(DC) stop db
 
 ###############################
 ## 🔍 DOCKER VOLUME COMMANDS ##
