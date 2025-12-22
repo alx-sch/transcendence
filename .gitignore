@@ -28,4 +28,4 @@ storage/
 .nfs*
 
 # Prisma
-/src/generated/prisma
+**/src/generated/prisma/
