@@ -33,13 +33,31 @@ services:
     #   user-service:
     #     condition: service_healthy
     networks:
-      - app_network
+      - grit_network
 
   ##############
   ## BACKEND  ##
   ##############
 
   # backend:
+
+  ##################
+  ## POSTGRES DB  ##
+  ##################
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - grit_network
 
 #############
 ## Volumes ##
@@ -48,12 +66,12 @@ services:
 volumes:
   caddy_data: # Storage for Caddy's SSL/TLS certificates
   caddy_config: # Storage for Caddy's configuration
-  # user_database: # Storage for user info (SQLite database)
+  db_data:
 
 ##############
 ## Networks ##
 ##############
 
 networks:
-  app_network:
+  grit_network:
     driver: bridge

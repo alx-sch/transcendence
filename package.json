@@ -1,13 +1,13 @@
 {
   "name": "grit-monorepo",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
     "format": "prettier --write .",
     "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "preinstall": "npx only-allow pnpm"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

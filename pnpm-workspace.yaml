@@ -1,3 +1,9 @@
-# Tell pnpm where the packages live
 packages:
-  - 'apps/*'
+  - apps/*
+
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/engines'
+  - esbuild
+  - prisma
+  - unrs-resolver
