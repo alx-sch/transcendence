@@ -1,12 +1,12 @@
 import { Controller, Get, Param, Post, Body, Put, Delete, Query } from '@nestjs/common';
 import { EventService } from './event.service';
-import { Event as EventModel } from '../generated/prisma/client';
+import { Event as EventModel } from '../generated/client/client';
 
-@Controller()
+@Controller('events')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
-  @Get('events/:id')
+  @Get(':id')
   async getEventById(@Param('id') id: string): Promise<EventModel | null> {
     return this.eventService.event({ id: Number(id) });
   }
@@ -15,19 +15,19 @@ export class EventController {
    The endpoints 'events' can deal as a search endpoint if the query string contains
    a search parameter e.g. /events?search=world
   */
-  @Get('events')
+  @Get()
   async getEvents(@Query('search') search?: string): Promise<EventModel[]> {
     if (search) return this.searchPublishedEvents(search);
     return this.getPublishedEvents();
   }
 
-  async getPublishedEvents(): Promise<EventModel[]> {
+  private async getPublishedEvents(): Promise<EventModel[]> {
     return this.eventService.events({
       where: { published: true },
     });
   }
 
-  async searchPublishedEvents(searchString: string): Promise<EventModel[]> {
+  private async searchPublishedEvents(searchString: string): Promise<EventModel[]> {
     return this.eventService.events({
       where: {
         OR: [
@@ -43,11 +43,11 @@ export class EventController {
     });
   }
 
-  @Post('events')
+  @Post()
   async createDraft(
-    @Body() postData: { title: string; content?: string; authorEmail: string }
+    @Body() eventData: { title: string; content?: string; authorEmail: string }
   ): Promise<EventModel> {
-    const { title, content, authorEmail } = postData;
+    const { title, content, authorEmail } = eventData;
     return this.eventService.createEvent({
       title,
       content,
@@ -57,16 +57,16 @@ export class EventController {
     });
   }
 
-  @Put('events/:id/publish')
-  async publishPost(@Param('id') id: string): Promise<EventModel> {
+  @Put(':id/publish')
+  async publishEvent(@Param('id') id: string): Promise<EventModel> {
     return this.eventService.updateEvent({
       where: { id: Number(id) },
       data: { published: true },
     });
   }
 
-  @Delete('events/:id')
-  async deletePost(@Param('id') id: string): Promise<EventModel> {
+  @Delete(':id')
+  async deleteEvent(@Param('id') id: string): Promise<EventModel> {
     return this.eventService.deleteEvent({ id: Number(id) });
   }
 }

@@ -45,29 +45,63 @@ all:	start
 ## 🛠️ UTILITY COMMANDS ##
 #########################
 
+# -- INSTALLATION TARGETS --
+
 # Installs all dependencies
-install:
-	@echo "$(BOLD)$(YELLOW)--- Installing  Dependencies...$(RESET)"
-	@pnpm install
-	@echo "$(BOLD)$(GREEN)Dependencies installed.$(RESET)"
+install: install-be install-fe
+	@echo "$(BOLD)$(GREEN)All dependencies installed.$(RESET)"
+
+# Installs only Backend dependencies (incl. Prisma)
+install-be:
+	@echo "$(BOLD)$(YELLOW)--- Installing Backend Dependencies...$(RESET)"
+	@pnpm --filter @grit/backend install
+	@pnpm --filter @grit/backend exec prisma generate
+	@echo "$(BOLD)$(GREEN)Backend dependencies installed.$(RESET)"
+
+# Installs only Frontend dependencies
+install-fe:
+	@echo "$(BOLD)$(YELLOW)--- Installing Frontend Dependencies...$(RESET)"
+	@pnpm --filter @grit/frontend install
+	@echo "$(BOLD)$(GREEN)Frontend dependencies installed.$(RESET)"
+
+# -- CLEANUP TARGETS --
+
+# Clear (ghost) processes on backend (3000) and frontend (5173) ports
+kill-ports:
+	@echo "$(BOLD)$(YELLOW)--- Clearing Ghost Processes on Ports 3000 & 5173...$(RESET)"
+	-@lsof -t -i:3000 | xargs -r kill -9 2>/dev/null || true
+	-@lsof -t -i:5173 | xargs -r kill -9 2>/dev/null || true
 
 # Cleans all generated files (installed 'node_modules', 'dist' folders etc.)
 clean: stop-dev
 	@echo "$(BOLD)$(YELLOW)--- Cleaning Up Project...$(RESET)"
+	rm -rf $(BACKEND_FOLDER)/src/generated
 	pnpm -r exec rm -rf dist .vite .turbo node_modules
 	rm -rf node_modules
 	@echo "$(BOLD)$(GREEN)Project cleaned up.$(RESET)"
 
-# WIP: WILL EVENTUALLY HANDLE POSTGRES
+# Removes the database container and its persistent data volume
 clean-db:
-	@echo "$(BOLD)$(RED)--- Deleting All Databases...$(RESET)"
-	@echo "$(GREEN)$(BOLD)All databases deleted.$(RESET)"
+	@echo "$(BOLD)$(RED)--- Deleting Database and Wiping Volumes...$(RESET)"
+	$(DC) down db --volumes
+	@echo "$(GREEN)$(BOLD)Database volume deleted.$(RESET)"
 
 # Removes the local backup folder
 clean-backup:
 	@echo "$(BOLD)$(RED)--- Deleting Backup Folder...$(RESET)"
 	rm -rf $(BACKUP_FOLDER)
 	@echo "$(GREEN)$(BOLD)Backup folder deleted.$(RESET)"
+
+# Purge: One command to rule them all! Stops all running containers and remove all Docker resources system-wide
+purge:	clean clean-backup
+	@echo "$(BOLD)$(RED)SYSTEM-WIDE PURGE: Removing All Docker Resources...$(RESET)"
+	@docker stop $$(docker ps -aq) 2>/dev/null || true
+	$(DC) down --volumes --rmi all
+	@docker system prune -af --volumes
+	@docker system df
+	@echo "$(BOLD)$(GREEN)All Docker resources have been purged.$(RESET)"
+
+# -- MISC TARGETS --
 
 typecheck: install
 	@echo "$(BOLD)$(YELLOW)--- Typechecking...$(RESET)"
@@ -84,15 +118,6 @@ format: install
 	pnpm run format;
 	@echo "$(BOLD)$(GREEN)Formating complete.$(RESET)"
 
-# 'clean' + 'clean-db' + stops all running containers and remove all Docker resources system-wide
-purge:	clean clean-db clean-backup
-	@echo "$(BOLD)$(RED)SYSTEM-WIDE PURGE: Removing All Docker Resources...$(RESET)"
-	@docker stop $$(docker ps -aq) 2>/dev/null || true
-	$(DC) down --volumes --rmi all
-	@docker system prune -af --volumes
-	@docker system df
-	@echo "$(BOLD)$(GREEN)All Docker resources have been purged.$(RESET)"
-
 # Shows live logs of Docker services running (in the background)
 logs:
 	$(DC) logs -f
@@ -101,15 +126,27 @@ logs:
 ## 🚀 DEVELOPMENT COMMANDS ##
 #############################
 
-dev: stop-dev install
+dev: stop-dev install db
 	@echo "$(BOLD)$(YELLOW)--- Starting Backend & Frontend [DEV]...$(RESET)"
 	pnpm run dev;
+
+# Run only Backend with DB check; NEST clears terminal before printing
+dev-be: install-be db
+	@echo "$(BOLD)$(BLUE)--- Starting BACKEND (API) ---$(RESET)"
+	pnpm --filter @grit/backend dev
+
+# Run only Frontend
+dev-fe: install-fe
+	@echo "$(BOLD)$(GREEN)--- Starting FRONTEND (UI) ---$(RESET)"
+	pnpm --filter @grit/frontend dev
 
 # Forcibly stops all dev server processes
 stop-dev:
 	@echo "$(BOLD)$(YELLOW)--- Stopping Workspace Processes...$(RESET)"
 	-@pkill -f "pnpm" 2>/dev/null || true
 	-@pkill -f "vite" 2>/dev/null || true
+	-@pkill -f "nest" 2>/dev/null || true
+	@$(MAKE) kill-ports --no-print-directory
 	@echo "$(BOLD)$(GREEN)Workspace processes stopped.$(RESET)"
 
 #############################
@@ -125,8 +162,8 @@ db: install
 	@pnpm --filter @grit/backend exec prisma db push
 	@$(MAKE) seed-db --no-print-directory
 	@echo "$(BOLD)$(GREEN)Database is ready, schema is synced and initial users are seeded.$(RESET)"
-	@echo "•   View logs:     '$(YELLOW)make logs$(RESET)'"
-	@echo "•   View database: '$(YELLOW)make view-db$(RESET)'"
+	@echo "•   View logs (db): '$(YELLOW)make logs$(RESET)'"
+	@echo "•   View database:  '$(YELLOW)make view-db$(RESET)'"
 
 # Populates the database with initial test data
 seed-db:
@@ -202,21 +239,37 @@ vol-restore:
 ## 📦 PRODUCTION COMMANDS ##
 ############################
 
-build: install
-	@echo "$(BOLD)$(YELLOW)--- Building Backend & Fronted...$(RESET)"
-	pnpm -r --parallel run build
-	@echo "$(BOLD)$(GREEN)Backend & Frontend build complete.$(RESET)"
+# -- BUILD TARGETS --
+
+# Build everything
+build: build-be build-fe
+	@echo "$(BOLD)$(GREEN)Full project build complete.$(RESET)"
+
+# Build only Backend
+build-be: install-be
+	@echo "$(BOLD)$(YELLOW)--- Building Backend...$(RESET)"
+	pnpm --filter @grit/backend run build
+	@echo "$(BOLD)$(GREEN)Backend build complete.$(RESET)"
+
+# Build only Frontend
+build-fe: install-fe
+	@echo "$(BOLD)$(YELLOW)--- Building Frontend...$(RESET)"
+	pnpm --filter @grit/frontend run build
+	@echo "$(BOLD)$(GREEN)Frontend build complete.$(RESET)"
+
+# -- RUN TARGETS (PROD MODE) --
 
 run: stop-dev build
 	@echo "$(BOLD)$(YELLOW)--- Running Build...$(RESET)"
 	pnpm -r --parallel run start
 
-## run-be / run-fe can envetually be removed once there is a backend ('build' craches otherwise)
-run-be: build
+# Runs only the compiled Backend (dist/main.js)
+run-be: build-be
 	@echo "$(BOLD)$(YELLOW)--- Running Backend Build...$(RESET)"
 	pnpm --filter @grit/backend start
 
-run-fe: build
+# Runs only the Frontend preview (dist/index.html)
+run-fe: build-fe
 	@echo "$(BOLD)$(YELLOW)--- Running Frontend Preview...$(RESET)"
 	pnpm --filter @grit/frontend start
 
@@ -227,12 +280,8 @@ start:
 	@echo "$(BOLD)$(YELLOW)--- Starting Production Services via Docker Compose...$(RESET)"
 	$(DC) up -d --build
 	@echo "$(BOLD)$(GREEN)Production services started in detached mode.$(RESET)"
-	@echo ""
-	@echo "•   View live logs:"
-	@echo "    '$(YELLOW)$(DC) logs -f$(RESET)'"
-	@echo "•   Open the application:"
-	@echo "    '$(YELLOW)https://localhost:8443$(RESET)'"
-	@echo "     or '$(YELLOW)http://localhost:8080$(RESET)' (redirects to HTTPS)"
+	@echo "•   View live logs: '$(YELLOW)make logs$(RESET)'"
+	@echo "•   View app:       '$(YELLOW)https://localhost:8443$(RESET)' / '$(YELLOW)http://localhost:8080$(RESET)'"
 
 # Stops production services via Docker Compose
 stop:
@@ -245,12 +294,11 @@ stop:
 ######################
 
 .PHONY:	all \
-		install \
-		clean clean-db clean-backup \
-		typecheck \
-		purge \
-		dev stop-dev \
+		install install-fe install-be \
+		clean clean-db clean-backup kill-ports purge\
+		typecheck lint format logs \
+		dev dev-be dev-fe stop-dev \
+		db seed-db view-db stop-db \
 		vol-ls vol-inspect vol-backup vol-restore \
-		build build-be build-fe \
-		run run-be run-fe \
+		build build-be build-fe run run-be run-fe \
 		start stop

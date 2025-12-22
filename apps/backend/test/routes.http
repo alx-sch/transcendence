@@ -1,11 +1,24 @@
 // Install REST Client by Huachao Mao in VSCode to send these off from here
 
+// Check DB updates via prisma view 'make view-db'
+
 // ========== BASIC SERVER ========== //
 
 // See if server is alive and kicking
 http://localhost:3000
 ###
 
+// ========== USERS ========== //
+
+// Create new user
+POST http://localhost:3000/users HTTP/1.1
+content-type: application/json
+
+{
+    "name": "Test User",
+    "email": "tester_v1@grit.com"
+}
+###
 
 // ========== EVENTS ========== //
 
@@ -21,35 +34,22 @@ http://localhost:3000/events/1
 http://localhost:3000/events?search=Event
 ###
 
-// Create event
+// Create event, use Alice email from seed
 POST http://localhost:3000/events HTTP/1.1
 content-type: application/json
 
 {
     "title": "Berghain 1",
-    "authorEmail": "alice@prisma.io"
+    "authorEmail": "alice@grit.com"
 }
 ###
 
-// Publish event
-PUT http://localhost:3000/events/2/publish
+// Publish event; check for ID returned above in event creation!
+PUT http://localhost:3000/events/1/publish
 ###
 
 // Delete event
 DELETE http://localhost:3000/events/1 HTTP/1.1
-###
-
-
-// ========== USERS ========== //
-
-// Create new user
-POST http://localhost:3000/users HTTP/1.1
-content-type: application/json
-
-{
-    "name": "user8",
-    "email": "user8@asdfasdfe3.de"
-}
 ###
 
 
@@ -73,11 +73,11 @@ content-type: application/json
 
 {
     "title": "Another Title",
-    "authorEmail": "alice@prisma.io"
+    "authorEmail": "alice@grit.com"
 }
 ###
 
-// Publish post
+// Publish post, check ID returned above
 PUT http://localhost:3000/posts/1/publish
 ###
 

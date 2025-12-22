@@ -2,10 +2,8 @@
   "name": "@grit/backend",
   "version": "0.0.1",
   "private": true,
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "scripts": {
+    "dev": "pnpm run start:dev",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -28,7 +26,9 @@
     "@nestjs/platform-express": "^11.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "@prisma/client": "^6.1.0"
+    "@prisma/client": "^7.2.0",
+    "@prisma/adapter-pg": "^7.2.0",
+    "pg": "^8.13.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -54,8 +54,9 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
-    "prisma": "^6.1.0",
-    "tsx": "^4.19.2"
+    "prisma": "^7.2.0",
+    "tsx": "^4.19.2",
+    "@types/pg": "^8.11.10"
   },
   "jest": {
     "moduleFileExtensions": [
