@@ -9,11 +9,16 @@ FRONTEND_FOLDER :=	apps/frontend
 # ---------------------------------------------------
 
 DEPL_PATH :=			deployment
-ENV_FILE :=				${DEPL_PATH}/.env
 DOCKER_COMP_FILE :=		${DEPL_PATH}/docker-compose.yaml
 
+ENV_FILE :=	.env
+# sed 's/#.*//g;': Deletes anything after a # on any line (removes comments).
+# /^[[:space:]]*$$/d: Deletes lines that are empty or only contain spaces.
+# This ensures that xargs only sees only sees KEY=VALUE pairs.
+LOAD_ENV := [ -f $(ENV_FILE) ] && export $$(sed 's/\#.*//g; /^[[:space:]]*$$/d' $(ENV_FILE) | xargs) || true
+
 # Docker Compose command shortcut
-DC = docker compose -f $(DOCKER_COMP_FILE) --env-file $(ENV_FILE) -p $(NAME)
+DC = docker compose -f $(DOCKER_COMP_FILE) -p $(NAME)
 
 # ---------------------------------------------------
 # NAMED DOCKER VOLUMES
@@ -55,7 +60,7 @@ install: install-be install-fe
 install-be:
 	@echo "$(BOLD)$(YELLOW)--- Installing Backend Dependencies...$(RESET)"
 	@pnpm --filter @grit/backend install
-	@pnpm --filter @grit/backend exec prisma generate
+	@$(LOAD_ENV); pnpm --filter @grit/backend exec prisma generate
 	@echo "$(BOLD)$(GREEN)Backend dependencies installed.$(RESET)"
 
 # Installs only Frontend dependencies
@@ -160,7 +165,7 @@ db: install
 	$(DC) up -d db
 	@echo "$(BOLD)$(YELLOW)--- Waiting for DB to wake up...$(RESET)"
 	@sleep 3
-	@pnpm --filter @grit/backend exec prisma db push
+	@$(LOAD_ENV); pnpm --filter @grit/backend exec prisma db push
 	@$(MAKE) seed-db --no-print-directory
 	@echo "$(BOLD)$(GREEN)Database is ready, schema is synced and initial users are seeded.$(RESET)"
 	@echo "•   View logs (db): '$(YELLOW)make logs$(RESET)'"
@@ -169,12 +174,12 @@ db: install
 # Populates the database with initial test data
 seed-db:
 	@echo "$(BOLD)$(YELLOW)--- Seeding Database...$(RESET)"
-	@pnpm --filter @grit/backend exec prisma db seed
+	@$(LOAD_ENV); pnpm --filter @grit/backend exec prisma db seed
 
 # Opens the Prisma Studio GUI for database management
 view-db:
 	@echo "$(BOLD)$(YELLOW)--- Opening Prisma Studio...$(RESET)"
-	@cd $(BACKEND_FOLDER) && npx prisma studio
+	@$(LOAD_ENV); cd $(BACKEND_FOLDER) && npx prisma studio
 
 # Stops the database container
 stop-db:
