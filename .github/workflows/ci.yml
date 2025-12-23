@@ -8,12 +8,8 @@ jobs:
   test:
     runs-on: ubuntu-latest # The Host Machine (hardware)
 
-    # Use the same as in devcontainer
-    container:
-      image: mcr.microsoft.com/devcontainers/javascript-node:20-bookworm
-
     steps:
-      # Download your code into the container
+      # Download code into the container
       - name: Check out repository
         uses: actions/checkout@v4
 
@@ -30,7 +26,7 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      # Clean install for pnpm; if lockfile needs to ne updated, fail the build
+      # Clean install for pnpm; if lockfile needs to be updated, fail the build
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
