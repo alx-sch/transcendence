@@ -1,10 +1,10 @@
 import { PrismaClient } from '@generated/client/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
-import 'dotenv/config'; // load DATABASE_URL
+import { env } from '@config/env';
 
 // Setup the connection pool
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 
 // Initialize the client WITH the adapter
@@ -52,7 +52,7 @@ main()
     await pool.end();
   })
   // Handle errors and ensure connection closes even on failure
-  .catch(async (e) => {
+  .catch(async (e: unknown) => {
     console.error(e);
     await prisma.$disconnect();
     await pool.end();

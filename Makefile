@@ -116,7 +116,12 @@ typecheck: install
 
 lint: install
 	@echo "$(BOLD)$(YELLOW)--- Linting...$(RESET)"
-	pnpm run lint;
+	@$(LOAD_ENV); pnpm run lint;
+	@echo "$(BOLD)$(GREEN)Linting complete.$(RESET)"
+
+lint-fix: install
+	@echo "$(BOLD)$(YELLOW)--- Linting...$(RESET)"
+	@$(LOAD_ENV); pnpm run lint:fix;
 	@echo "$(BOLD)$(GREEN)Linting complete.$(RESET)"
 
 format: install
@@ -137,14 +142,14 @@ dev: stop-dev install db
 	pnpm run dev;
 
 # Run only Backend with DB check; NEST clears terminal before printing
-dev-be: install-be db
-	@echo "$(BOLD)$(BLUE)--- Starting BACKEND (API) ---$(RESET)"
-	pnpm --filter @grit/backend dev
+dev-be: db
+	@echo "$(BOLD)$(GREEN)--- Starting BACKEND (API) ---$(RESET)"
+	$(LOAD_ENV); pnpm --filter @grit/backend dev
 
 # Run only Frontend
 dev-fe: install-fe
 	@echo "$(BOLD)$(GREEN)--- Starting FRONTEND (UI) ---$(RESET)"
-	pnpm --filter @grit/frontend dev
+	$(LOAD_ENV); pnpm --filter @grit/frontend dev
 
 # Forcibly stops all dev server processes
 stop-dev:
@@ -160,7 +165,7 @@ stop-dev:
 #############################
 
 # Starts only the database Docker container for local development
-db: install 
+db: install-be
 	@echo "$(BOLD)$(YELLOW)--- Starting Postgres [DOCKER]...$(RESET)"
 	$(DC) up -d db
 	@echo "$(BOLD)$(YELLOW)--- Waiting for DB to wake up...$(RESET)"
@@ -254,13 +259,13 @@ build: build-be build-fe
 # Build only Backend
 build-be: install-be
 	@echo "$(BOLD)$(YELLOW)--- Building Backend...$(RESET)"
-	pnpm --filter @grit/backend run build
+	$(LOAD_ENV); pnpm --filter @grit/backend run build
 	@echo "$(BOLD)$(GREEN)Backend build complete.$(RESET)"
 
 # Build only Frontend
 build-fe: install-fe
 	@echo "$(BOLD)$(YELLOW)--- Building Frontend...$(RESET)"
-	pnpm --filter @grit/frontend run build
+	$(LOAD_ENV); pnpm --filter @grit/frontend run build
 	@echo "$(BOLD)$(GREEN)Frontend build complete.$(RESET)"
 
 # -- RUN TARGETS (PROD MODE) --
@@ -272,12 +277,12 @@ run: stop-dev build
 # Runs only the compiled Backend (dist/main.js)
 run-be: build-be
 	@echo "$(BOLD)$(YELLOW)--- Running Backend Build...$(RESET)"
-	pnpm --filter @grit/backend start
+	$(LOAD_ENV); pnpm --filter @grit/backend start
 
 # Runs only the Frontend preview (dist/index.html)
 run-fe: build-fe
 	@echo "$(BOLD)$(YELLOW)--- Running Frontend Preview...$(RESET)"
-	pnpm --filter @grit/frontend start
+	$(LOAD_ENV); pnpm --filter @grit/frontend start
 
 ###############################
 
@@ -302,7 +307,7 @@ stop:
 .PHONY:	all \
 		install install-fe install-be \
 		clean clean-db clean-backup kill-ports purge\
-		typecheck lint format logs \
+		typecheck lint lint-fix format logs \
 		dev dev-be dev-fe stop-dev \
 		db seed-db view-db stop-db \
 		vol-ls vol-inspect vol-backup vol-restore \
