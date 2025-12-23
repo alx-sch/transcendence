@@ -23,7 +23,7 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'pnpm'
 
       # Clean install for pnpm; if lockfile needs to be updated, fail the build
