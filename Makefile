@@ -28,20 +28,28 @@ ENV_CONFIG :=			.env.config
 
 # Define only the goals that ABSOLUTELY REQUIRE the .env files
 # avoids 'crashing'
-RUNTIME_GOALS := check-env start stop dev dev-be db clean-db seed-db run run-be purge logs
+RUNTIME_GOALS := all check-env start stop dev dev-be db clean-db seed-db run run-be purge logs
 
 -include $(ENV_SECRETS)
 -include $(ENV_CONFIG)
 
-# Check if any of the current goals are in the Runtime list
-ifneq ($(filter $(RUNTIME_GOALS),$(MAKECMDGOALS)),)
+# Check if the goal is a Runtime Goal OR if no goal was specified (defaults to 'all')
+ifeq ($(MAKECMDGOALS),)
+    # This covers the 'just type make' case
+    SHOULD_CHECK := 1
+else ifneq ($(filter $(RUNTIME_GOALS),$(MAKECMDGOALS)),)
+    # This covers cases like 'make start' or 'make purge'
+    SHOULD_CHECK := 1
+endif
+
+ifeq ($(SHOULD_CHECK),1)
     ifeq ($(wildcard $(ENV_SECRETS)),)
-        $(shell printf "$(RED)$(BOLD)❌ Missing $(ENV_SECRETS)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to restore missing environment files.$(RESET)\n\n" >&2)
+        $(shell printf "$(RED)$(BOLD)❌ Missing $(ENV_SECRETS)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to restore missing environment files.$(RESET)\n" >&2)
         $(error )
     endif
 
     ifeq ($(wildcard $(ENV_CONFIG)),)
-        $(shell printf "$(RED)$(BOLD)❌ Missing $(ENV_CONFIG)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to restore missing environment files.$(RESET)\n\n" >&2)
+        $(shell printf "$(RED)$(BOLD)❌ Missing $(ENV_CONFIG)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to restore missing environment files.$(RESET)\n" >&2)
         $(error )
     endif
 endif
