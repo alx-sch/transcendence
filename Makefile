@@ -41,12 +41,12 @@ endif
 -include $(ENV_SECRETS)
 -include $(ENV_CONFIG)
 
-# Default values if not set in .env files
+# Default values if not set in .env files, needed for 'kill-ports' cmd
 BE_PORT ?= 3000
 DB_PORT ?= 5432
 FE_PORT ?= 5173
 
-# For building Prisma client, also needed for utils commands
+# For building Prisma client, needed for utils commands
 POSTGRES_DB ?= db
 POSTGRES_USER ?= name
 POSTGRES_PASSWORD ?= 1234567_pw
@@ -78,7 +78,7 @@ all:	start
 
 ALL_ENV_FILES :=	$(ENV_SECRETS) $(ENV_CONFIG)
 
-# List required variables here
+# List required variables here (no defaulting during runtime)
 REQUIRED_VARS :=	POSTGRES_DB \
 					POSTGRES_USER \
 					POSTGRES_PASSWORD \
