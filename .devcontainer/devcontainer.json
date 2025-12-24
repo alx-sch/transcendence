@@ -23,5 +23,5 @@
         "humao.rest-client" // REST cliet: Execute HTTP requests directly in vscode (backend/test/routes.http)
       ]
     }
-  },
+  }
 }

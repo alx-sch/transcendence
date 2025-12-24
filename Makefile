@@ -25,23 +25,31 @@ DOCKER_COMP_FILE :=		${DEPL_PATH}/docker-compose.yaml
 ENV_SECRETS :=			.env.secrets
 ENV_CONFIG :=			.env.config
 
-# Check if .env.secrets exists
-ifeq ($(wildcard $(ENV_SECRETS)),)
-    $(error $(shell echo -e "$(RED)$(BOLD)❌ Missing $(ENV_SECRETS)!$(RESET) $(YELLOW)Please copy $(ENV_SECRETS).example to $(ENV_SECRETS)$(RESET)"))
+# Define only the goals that ABSOLUTELY REQUIRE the .env files
+RUNTIME_GOALS := start stop dev dev-be db clean-db seed-db run run-be purge logs
+
+# Check if any of the current goals are in the Runtime list
+ifneq ($(filter $(RUNTIME_GOALS),$(MAKECMDGOALS)),)
+    ifeq ($(wildcard $(ENV_SECRETS)),)
+        $(error $(shell echo -e "$(RED)$(BOLD)❌ Missing $(ENV_SECRETS)!$(RESET) $(YELLOW)Please copy $(ENV_SECRETS).example to $(ENV_SECRETS)$(RESET)"))
+    endif
+    ifeq ($(wildcard $(ENV_CONFIG)),)
+        $(error $(shell echo -e "$(RED)$(BOLD)❌ Missing $(ENV_CONFIG)!$(RESET) Please ensure it exists before running commands"))
+    endif
 endif
 
-# Check if .env.config exists
-ifeq ($(wildcard $(ENV_CONFIG)),)
-   $(error $(shell echo -e "$(RED)$(BOLD)❌ Missing $(ENV_SECRETS)!$(RESET) Please ensure it exists before running commands)
-endif
-
-include $(ENV_SECRETS)
-include $(ENV_CONFIG)
+-include $(ENV_SECRETS)
+-include $(ENV_CONFIG)
 
 # Default values if not set in .env files
 BE_PORT ?= 3000
 DB_PORT ?= 5432
 FE_PORT ?= 5173
+
+# For building Prisma client, also needed for utils commands
+POSTGRES_DB ?= db
+POSTGRES_USER ?= name
+POSTGRES_PASSWORD ?= 1234567_pw
 
 # Export all included variables to any shell commands called by make
 export
