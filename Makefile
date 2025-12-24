@@ -26,22 +26,23 @@ ENV_SECRETS :=			.env.secrets
 ENV_CONFIG :=			.env.config
 
 # Define only the goals that ABSOLUTELY REQUIRE the .env files
+# avoids 'crashing'
 RUNTIME_GOALS := start stop dev dev-be db clean-db seed-db run run-be purge logs
 
 # Check if any of the current goals are in the Runtime list
 ifneq ($(filter $(RUNTIME_GOALS),$(MAKECMDGOALS)),)
     ifeq ($(wildcard $(ENV_SECRETS)),)
-        $(error $(shell echo -e "$(RED)$(BOLD)❌ Missing $(ENV_SECRETS)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init$(RESET) $(BLUE)to generate it from the template$(RESET)"))
+        $(error $(shell echo -e "$(RED)$(BOLD)❌ Missing $(ENV_SECRETS)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to generate it from the template$(RESET)"))
     endif
     ifeq ($(wildcard $(ENV_CONFIG)),)
-        $(error $(shell echo -e "$(RED)$(BOLD)❌ Missing $(ENV_CONFIG)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init$(RESET) $(BLUE)to generate default configuration$(RESET)"))
+        $(error $(shell echo -e "$(RED)$(BOLD)❌ Missing $(ENV_CONFIG)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to generate default configuration$(RESET)"))
     endif
 endif
 
 -include $(ENV_SECRETS)
 -include $(ENV_CONFIG)
 
-# Default values if not set in .env files, needed for 'kill-ports' and 'make init' cmd
+# Default values if not set in .env files, needed for 'kill-ports' and 'make init-env' cmd
 HTTP_PORT ?= 8080
 HTTPS_PORT ?= 8443
 BE_PORT ?= 3000
@@ -74,9 +75,9 @@ PREF_VOLUMES :=	$(foreach v,$(VOLUMES),$(NAME)_$(v))
 
 all:	start
 
-#########################
-## 🛡️ VALIDATION       ##
-#########################
+#######################
+## 🛡️ ENV VALIDATION ##
+#######################
 
 ALL_ENV_FILES :=	$(ENV_SECRETS) $(ENV_CONFIG)
 
@@ -91,7 +92,7 @@ check-env:
 	@for file in $(ALL_ENV_FILES); do \
 		if [ ! -f $$file ]; then \
 			echo "$(BOLD)$(RED)❌ Environment Error: $(YELLOW)$$file$(RED) not found.$(RESET)"; \
-			echo "$(BLUE)➜ Run $(BOLD)make init$(RESET) $(BLUE)to generate missing configuration.$(RESET)"; \
+			echo "$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to generate missing configuration.$(RESET)"; \
 			exit 1; \
 		fi; \
 	done
@@ -109,16 +110,16 @@ check-env:
 		fi; \
 	done
 
+# Init needed env files if not present
+init-env:
+	@test -f $(ENV_SECRETS) || (cp $(ENV_SECRETS).example $(ENV_SECRETS) && echo "✅ Created $(ENV_SECRETS)")
+	@test -f $(ENV_CONFIG) || (printf "HTTP_PORT=$(HTTP_PORT)\nHTTPS_PORT=$(HTTPS_PORT)\nBE_PORT=$(BE_PORT)\nDB_PORT=$(DB_PORT)\nFE_PORT=$(FE_PORT)\n" > $(ENV_CONFIG) && echo "✅ Created $(ENV_CONFIG)")
+
 #########################
 ## 🛠️ UTILITY COMMANDS ##
 #########################
 
 # -- INSTALLATION TARGETS --
-
-# Init needed env files if not present
-init:
-	@test -f $(ENV_SECRETS) || (cp $(ENV_SECRETS).example $(ENV_SECRETS) && echo "Created $(ENV_SECRETS)")
-	@test -f $(ENV_CONFIG) || (printf "HTTP_PORT=$(HTTP_PORT)\nHTTPS_PORT=$(HTTPS_PORT)\nBE_PORT=$(BE_PORT)\nDB_PORT=$(DB_PORT)\nFE_PORT=$(FE_PORT)\n" > $(ENV_CONFIG) && echo "Created $(ENV_CONFIG)")
 
 # Installs all dependencies
 install: install-be install-fe
@@ -374,7 +375,7 @@ stop:
 ######################
 
 .PHONY:	all \
-		init install install-fe install-be check-env \
+		init-env install install-fe install-be check-env \
 		clean clean-db clean-backup kill-ports purge\
 		typecheck lint lint-fix format logs \
 		dev dev-be dev-fe stop-dev \

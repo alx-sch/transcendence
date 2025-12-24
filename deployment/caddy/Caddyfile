@@ -13,7 +13,7 @@
 }
 
 # HTTPS Site Configuration
-localhost:443 {
+localhost:443, :443 {
     # Use self-signed certs for local production
     tls internal
 
@@ -22,9 +22,9 @@ localhost:443 {
     # ---------------------
     # Match any request starting with '/api/user'
     # Strip "/api-user", forward the rest to backend container (e.g., '/list')
-    handle_path /api-user/* {
-        reverse_proxy user-service:3000
-    }
+    # handle_path /api-user/* {
+    #     reverse_proxy user-service:3000
+    # }
 
     # Add more API routes as needed:
     # handle_path /api/registration* {
@@ -41,19 +41,3 @@ localhost:443 {
         file_server
     }
 }
-
-# ==================================
-# PRODUCTION (online:visit the domain)
-# ==================================
-
-# exotischkochen.de {
-#     handle_path /api/users* {
-#         reverse_proxy user-service:3000
-#     }
-
-#     handle {
-#         root * /srv/dist
-#         try_files {path} /index.html
-#         file_server
-#     }
-# }
