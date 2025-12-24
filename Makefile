@@ -41,7 +41,9 @@ endif
 -include $(ENV_SECRETS)
 -include $(ENV_CONFIG)
 
-# Default values if not set in .env files, needed for 'kill-ports' cmd
+# Default values if not set in .env files, needed for 'kill-ports' and 'make init' cmd
+HTTP_PORT ?= 8080
+HTTPS_PORT ?= 8443
 BE_PORT ?= 3000
 DB_PORT ?= 5432
 FE_PORT ?= 5173
@@ -115,8 +117,8 @@ check-env:
 
 # Init needed env files if not present
 init:
-	@test -f .env.secrets || (cp .env.secrets.example .env.secrets && echo "Created .env.secrets")
-	@test -f .env.config || (echo "HTTP_PORT=8080\nHTTPS_PORT=8443\n" > .env.config && echo "Created .env.config")
+	@test -f $(ENV_SECRETS) || (cp $(ENV_SECRETS).example $(ENV_SECRETS) && echo "Created $(ENV_SECRETS)")
+	@test -f $(ENV_CONFIG) || (printf "HTTP_PORT=$(HTTP_PORT)\nHTTPS_PORT=$(HTTPS_PORT)\nBE_PORT=$(BE_PORT)\nDB_PORT=$(DB_PORT)\nFE_PORT=$(FE_PORT)\n" > $(ENV_CONFIG) && echo "Created $(ENV_CONFIG)")
 
 # Installs all dependencies
 install: install-be install-fe
