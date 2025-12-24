@@ -26,12 +26,10 @@ const envSchema = baseSchema.transform((data: BaseEnv) => {
 const envValidation = envSchema.safeParse(process.env);
 
 if (!envValidation.success) {
-  console.error('\n❌ Invalid Environment Variables:');
+  const pretty = z.prettifyError(envValidation.error);
 
-  for (const err of envValidation.error.issues) {
-    const path = err.path.join('.');
-    console.error(`  - ${path}: ${err.message}`);
-  }
+  console.error('\n❌ Invalid Environment Variables:');
+  console.error(pretty);
 
   console.error(''); // Extra spacing for the CLI
   process.exit(1);
