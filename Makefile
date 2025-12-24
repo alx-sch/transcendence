@@ -23,28 +23,30 @@ DEPL_PATH :=			deployment
 DOCKER_COMP_FILE :=		${DEPL_PATH}/docker-compose.yaml
 
 ENV_SECRETS :=			.env.secrets
+ENV_SECRETS_EXMPL :=	.env.secrets.example
 ENV_CONFIG :=			.env.config
 
 # Define only the goals that ABSOLUTELY REQUIRE the .env files
 # avoids 'crashing'
-RUNTIME_GOALS := start stop dev dev-be db clean-db seed-db run run-be purge logs
-
-# Check if any of the current goals are in the Runtime list
-ifneq ($(filter $(RUNTIME_GOALS),$(MAKECMDGOALS)),)
-    ifeq ($(wildcard $(ENV_SECRETS)),)
-        $(error $(shell echo -e "$(RED)$(BOLD)❌ Missing $(ENV_SECRETS)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to generate it from the template$(RESET)"))
-    endif
-    ifeq ($(wildcard $(ENV_CONFIG)),)
-        $(error $(shell echo -e "$(RED)$(BOLD)❌ Missing $(ENV_CONFIG)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to generate default configuration$(RESET)"))
-    endif
-endif
+RUNTIME_GOALS := check-env start stop dev dev-be db clean-db seed-db run run-be purge logs
 
 -include $(ENV_SECRETS)
 -include $(ENV_CONFIG)
 
-# Default values if not set in .env files, needed for 'kill-ports' and 'make init-env' cmd
-HTTP_PORT ?= 8080
-HTTPS_PORT ?= 8443
+# Check if any of the current goals are in the Runtime list
+ifneq ($(filter $(RUNTIME_GOALS),$(MAKECMDGOALS)),)
+    ifeq ($(wildcard $(ENV_SECRETS)),)
+        $(shell printf "$(RED)$(BOLD)❌ Missing $(ENV_SECRETS)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to restore missing environment files.$(RESET)\n\n" >&2)
+        $(error )
+    endif
+
+    ifeq ($(wildcard $(ENV_CONFIG)),)
+        $(shell printf "$(RED)$(BOLD)❌ Missing $(ENV_CONFIG)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to restore missing environment files.$(RESET)\n\n" >&2)
+        $(error )
+    endif
+endif
+
+# Default values if not set in .env files, needed for 'kill-ports' / cleanup routine
 BE_PORT ?= 3000
 DB_PORT ?= 5432
 FE_PORT ?= 5173
@@ -88,32 +90,28 @@ REQUIRED_VARS :=	POSTGRES_DB \
 					HTTP_PORT \
 					HTTPS_PORT
 
+# Check expected vars in envfiles (not validated by 'zod' before use)
 check-env:
-	@for file in $(ALL_ENV_FILES); do \
-		if [ ! -f $$file ]; then \
-			echo "$(BOLD)$(RED)❌ Environment Error: $(YELLOW)$$file$(RED) not found.$(RESET)"; \
-			echo "$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to generate missing configuration.$(RESET)"; \
-			exit 1; \
-		fi; \
-	done
 	@for var in $(REQUIRED_VARS); do \
 		found=0; \
 		for file in $(ALL_ENV_FILES); do \
-			if grep -q "^$$var=" $$file && [ -n "$$(grep "^$$var=" $$file | cut -d'=' -f2-)" ]; then \
+			if [ -f $$file ] && grep -q "^$$var=" $$file && [ -n "$$(grep "^$$var=" $$file | cut -d'=' -f2-)" ]; then \
 				found=1; \
 				break; \
 			fi; \
 		done; \
 		if [ $$found -eq 0 ]; then \
-			echo "$(BOLD)$(RED)❌ Error: $(YELLOW)$$var$(RED) is not set in any env file ($(ALL_ENV_FILES))$(RESET)"; \
+			echo "$(BOLD)$(RED)❌ Error: $(YELLOW)$$var$(RED) is not set in any env file ($(ALL_ENV_FILES))!$(RESET)"; \
+			echo "$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)or check your .env files manually.$(RESET)"; \
 			exit 1; \
 		fi; \
 	done
 
 # Init needed env files if not present
 init-env:
-	@test -f $(ENV_SECRETS) || (cp $(ENV_SECRETS).example $(ENV_SECRETS) && echo "✅ Created $(ENV_SECRETS)")
-	@test -f $(ENV_CONFIG) || (printf "HTTP_PORT=$(HTTP_PORT)\nHTTPS_PORT=$(HTTPS_PORT)\nBE_PORT=$(BE_PORT)\nDB_PORT=$(DB_PORT)\nFE_PORT=$(FE_PORT)\n" > $(ENV_CONFIG) && echo "✅ Created $(ENV_CONFIG)")
+	@test -f $(ENV_SECRETS_EXMPL) || (git restore $(ENV_SECRETS_EXMPL) && echo "✅ Restored $(ENV_SECRETS_EXMPL)");
+	@test -f $(ENV_SECRETS) || (cp $(ENV_SECRETS).example $(ENV_SECRETS) && echo "✅ Created $(ENV_SECRETS)");
+	@test -f $(ENV_CONFIG) || (git restore $(ENV_CONFIG) && echo "✅ Restored $(ENV_CONFIG)");
 
 #########################
 ## 🛠️ UTILITY COMMANDS ##
@@ -169,7 +167,7 @@ clean-backup:
 	@echo "$(GREEN)$(BOLD)Backup folder deleted.$(RESET)"
 
 # Purge: One command to rule them all! Stops all running containers and remove all Docker resources system-wide
-purge:	clean clean-backup
+purge: check-env clean clean-backup
 	@echo "$(BOLD)$(RED)SYSTEM-WIDE PURGE: Removing All Docker Resources...$(RESET)"
 	@docker stop $$(docker ps -aq) 2>/dev/null || true
 	$(DC) down --volumes --rmi all
@@ -365,7 +363,7 @@ start: check-env
 	@echo "•   View app:       '$(YELLOW)https://localhost:$(HTTPS_PORT)$(RESET)' / '$(YELLOW)http://localhost:$(HTTP_PORT)$(RESET)'"
 
 # Stops production services via Docker Compose
-stop:
+stop: check-env
 	@echo "$(BOLD)$(YELLOW)--- Stopping production services...$(RESET)"
 	$(DC) down
 	@echo "$(BOLD)$(GREEN)Production services stopped.$(RESET)"
