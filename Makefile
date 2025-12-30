@@ -51,6 +51,23 @@ VOLUMES :=		caddy_data \
 PREF_VOLUMES :=	$(foreach v,$(VOLUMES),$(NAME)_$(v))
 
 # ---------------------------------------------------
+# PURGE COMMAND, warning if not in a Codespace (dedicated project dev container)
+# ---------------------------------------------------
+
+ifeq ($(shell [ -n "$$CODESPACES" ] && echo 1),1)
+	PURGE_WARN := @echo "$(BOLD)$(RED)SYSTEM-WIDE PURGE: Removing All Docker Resources...$(RESET)"
+else
+	PURGE_WARN := \
+		echo "$(BOLD)$(RED)⚠️ WARNING: This will remove ALL Docker resources on this machine!$(RESET)"; \
+		read -p "Are you sure you want to continue? [y/n] " confirm; \
+		if [ "$$confirm" != "y" ]; then \
+			echo "Purge cancelled."; \
+			exit 1; \
+		fi; \
+		echo "$(BOLD)$(RED)SYSTEM-WIDE PURGE: Removing All Docker Resources...$(RESET)"
+endif
+
+# ---------------------------------------------------
 # TARGETS
 # ---------------------------------------------------
 
@@ -122,7 +139,7 @@ clean: stop-proc
 	find . -name "*.tsbuildinfo" -type f -delete
 	@echo "$(BOLD)$(GREEN)Project cleaned up.$(RESET)"
 
-# Removes the database container and its persistent data volume
+# Removes the database container and its persistent data volume; resets DB
 clean-db:
 	@echo "$(BOLD)$(RED)--- Deleting Database and Wiping Volumes...$(RESET)"
 	$(DC) down db --volumes
@@ -134,9 +151,15 @@ clean-backup:
 	rm -rf $(BACKUP_FOLDER)
 	@echo "$(GREEN)$(BOLD)Backup folder deleted.$(RESET)"
 
+# Cleans everything related to this project: builds, node_modules, DB container, volumes, backups:
+fclean: clean clean-backup
+	$(DC) down --volumes --rmi local
+	@echo "$(GREEN)$(BOLD)Project fully cleaned.$(RESET)"
+
+## WARNING ##
 # Purge: One command to rule them all! Stops all running containers and remove all Docker resources system-wide
 purge: clean clean-backup
-	@echo "$(BOLD)$(RED)SYSTEM-WIDE PURGE: Removing All Docker Resources...$(RESET)"
+	@$(PURGE_WARN)
 	@docker stop $$(docker ps -aq) 2>/dev/null || true
 	$(DC) down --volumes --rmi all
 	@docker system prune -af --volumes
