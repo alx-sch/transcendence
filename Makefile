@@ -16,59 +16,30 @@ BLUE :=			\033[34m
 RED :=			\033[91m
 
 # ---------------------------------------------------
+# ENV FILE
+# ---------------------------------------------------
+
+ENV_FILE :=		.env
+ENV_EXMPL :=	.env.example
+
+# Load example first (defaults)
+-include $(ENV_EXMPL)
+
+# Load real env second, if it exists (overrides example)
+-include $(ENV_FILE)
+
+# Export all variables to shell commands
+export
+
+# ---------------------------------------------------
 # DOCKER COMPOSE / DEPLOYMENT
 # ---------------------------------------------------
 
 DEPL_PATH :=			deployment
 DOCKER_COMP_FILE :=		${DEPL_PATH}/docker-compose.yaml
 
-ENV_SECRETS :=			.env.secrets
-ENV_SECRETS_EXMPL :=	.env.secrets.example
-ENV_CONFIG :=			.env.config
-
-# Define only the goals that ABSOLUTELY REQUIRE the .env files
-# avoids 'crashing'
-RUNTIME_GOALS := all check-env start stop dev dev-be db clean-db seed-db run run-be purge logs
-
--include $(ENV_SECRETS)
--include $(ENV_CONFIG)
-
-# Check if the goal is a Runtime Goal OR if no goal was specified (defaults to 'all')
-ifeq ($(MAKECMDGOALS),)
-    # This covers the 'just type make' case
-    SHOULD_CHECK := 1
-else ifneq ($(filter $(RUNTIME_GOALS),$(MAKECMDGOALS)),)
-    # This covers cases like 'make start' or 'make purge'
-    SHOULD_CHECK := 1
-endif
-
-ifeq ($(SHOULD_CHECK),1)
-    ifeq ($(wildcard $(ENV_SECRETS)),)
-        $(shell printf "$(RED)$(BOLD)❌ Missing $(ENV_SECRETS)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to create/restore missing env files.$(RESET)\n" >&2)
-        $(error )
-    endif
-
-    ifeq ($(wildcard $(ENV_CONFIG)),)
-        $(shell printf "$(RED)$(BOLD)❌ Missing $(ENV_CONFIG)!$(RESET)\n$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)to create/restore missing env files.$(RESET)\n" >&2)
-        $(error )
-    endif
-endif
-
-# Default values if not set in .env files, needed for 'kill-ports' / cleanup routine
-BE_PORT ?= 3000
-DB_PORT ?= 5432
-FE_PORT ?= 5173
-
-# For building Prisma client, needed for utils commands
-POSTGRES_DB ?= db
-POSTGRES_USER ?= name
-POSTGRES_PASSWORD ?= 1234567_pw
-
-# Export all included variables to any shell commands called by make
-export
-
 # Docker Compose command shortcut
-DC = docker compose -f $(DOCKER_COMP_FILE) -p $(NAME) --env-file $(ENV_SECRETS) --env-file $(ENV_CONFIG)
+DC :=	docker compose -f $(DOCKER_COMP_FILE) -p $(NAME)
 
 # ---------------------------------------------------
 # NAMED DOCKER VOLUMES
@@ -89,37 +60,17 @@ all:	start
 ## 🛡️ ENV VALIDATION ##
 #######################
 
-ALL_ENV_FILES :=	$(ENV_SECRETS) $(ENV_CONFIG)
-
-# List required variables here (no defaulting during runtime)
-REQUIRED_VARS :=	POSTGRES_DB \
-					POSTGRES_USER \
-					POSTGRES_PASSWORD \
-					HTTP_PORT \
-					HTTPS_PORT
-
-# Check expected vars in envfiles (not validated by 'zod' before use)
+# Check for .env file
 check-env:
-	@for var in $(REQUIRED_VARS); do \
-		found=0; \
-		for file in $(ALL_ENV_FILES); do \
-			if [ -f $$file ] && grep -q "^$$var=" $$file && [ -n "$$(grep "^$$var=" $$file | cut -d'=' -f2-)" ]; then \
-				found=1; \
-				break; \
-			fi; \
-		done; \
-		if [ $$found -eq 0 ]; then \
-			echo "$(BOLD)$(RED)❌ Error: $(YELLOW)$$var$(RED) is not set in any env file ($(ALL_ENV_FILES))!$(RESET)"; \
-			echo "$(BLUE)➜ Run $(BOLD)make init-env$(RESET) $(BLUE)or check your env files manually.$(RESET)"; \
-			exit 1; \
-		fi; \
-	done
+	@if [ ! -f $(ENV_FILE) ]; then \
+		printf "❌ Missing $(BOLD)$(ENV_FILE)$(RESET) file!\n➜ Run '$(BLUE)$(BOLD)make init-env$(RESET)' to create it.\n"; \
+		exit 1; \
+	fi
 
-# Init needed env files if not present
+# Init .env files if not present
 init-env:
-	@test -f $(ENV_SECRETS_EXMPL) || (git restore $(ENV_SECRETS_EXMPL) && echo "✅ Restored $(ENV_SECRETS_EXMPL)");
-	@test -f $(ENV_SECRETS) || (cp $(ENV_SECRETS).example $(ENV_SECRETS) && echo "✅ Created $(ENV_SECRETS)");
-	@test -f $(ENV_CONFIG) || (git restore $(ENV_CONFIG) && echo "✅ Restored $(ENV_CONFIG)");
+	@test -f $(ENV_FILE) || (cp $(ENV_EXMPL) $(ENV_FILE) \
+		&& echo "✅ Created $(BOLD)$(ENV_FILE)$(RESET) file ➜ Please configure it before running the project.");
 
 #########################
 ## 🛠️ UTILITY COMMANDS ##
@@ -153,8 +104,17 @@ kill-ports:
 	@lsof -t -i:$${DB_PORT} | xargs -r kill -9 || true
 	@lsof -t -i:$${FE_PORT} | xargs -r kill -9 || true
 
+# Forcibly stops all project-related processes (if not running in containers)
+stop-proc:
+	@echo "$(BOLD)$(YELLOW)--- Stopping Workspace Processes...$(RESET)"
+	-@pkill -f "pnpm" 2>/dev/null || true
+	-@pkill -f "vite" 2>/dev/null || true
+	-@pkill -f "nest" 2>/dev/null || true
+	@$(MAKE) kill-ports --no-print-directory
+	@echo "$(BOLD)$(GREEN)Workspace processes stopped.$(RESET)"
+
 # Cleans all generated files (installed 'node_modules', 'dist' folders etc.)
-clean: stop-dev
+clean: stop-proc
 	@echo "$(BOLD)$(YELLOW)--- Cleaning Up Project...$(RESET)"
 	rm -rf $(BACKEND_FOLDER)/src/generated
 	pnpm -r exec rm -rf dist .vite .turbo node_modules
@@ -175,7 +135,7 @@ clean-backup:
 	@echo "$(GREEN)$(BOLD)Backup folder deleted.$(RESET)"
 
 # Purge: One command to rule them all! Stops all running containers and remove all Docker resources system-wide
-purge: check-env clean clean-backup
+purge: clean clean-backup
 	@echo "$(BOLD)$(RED)SYSTEM-WIDE PURGE: Removing All Docker Resources...$(RESET)"
 	@docker stop $$(docker ps -aq) 2>/dev/null || true
 	$(DC) down --volumes --rmi all
@@ -213,28 +173,19 @@ logs:
 ## 🚀 DEVELOPMENT COMMANDS ##
 #############################
 
-dev: stop-dev install db
+dev: stop-proc install db
 	@echo "$(BOLD)$(YELLOW)--- Starting Backend & Frontend [DEV]...$(RESET)"
 	pnpm run dev;
 
 # Run only Backend with DB check; NEST clears terminal before printing
-dev-be: check-env db
+dev-be: check-env stop-proc db
 	@echo "$(BOLD)$(GREEN)--- Starting BACKEND (API) ---$(RESET)"
 	pnpm --filter @grit/backend dev
 
 # Run only Frontend
-dev-fe: check-env install-fe
+dev-fe: check-env stop-proc install-fe
 	@echo "$(BOLD)$(GREEN)--- Starting FRONTEND (UI) ---$(RESET)"
 	pnpm --filter @grit/frontend dev
-
-# Forcibly stops all dev server processes
-stop-dev:
-	@echo "$(BOLD)$(YELLOW)--- Stopping Workspace Processes...$(RESET)"
-	-@pkill -f "pnpm" 2>/dev/null || true
-	-@pkill -f "vite" 2>/dev/null || true
-	-@pkill -f "nest" 2>/dev/null || true
-	@$(MAKE) kill-ports --no-print-directory
-	@echo "$(BOLD)$(GREEN)Workspace processes stopped.$(RESET)"
 
 #############################
 ## 📁 DATABASE (LOCAL DEV) ##
@@ -282,7 +233,7 @@ vol-ls:
 			docker run --rm -v $$vol:/data alpine ls -R /data 2>/dev/null; \
 			echo ""; \
 		else \
-			echo "$(RED)Volume '$$vol' does not exist.$(RESET)"; \
+			echo "Volume $(BOLD)'$$vol'$(RESET) does not exist."; \
 		fi; \
 	done
 
@@ -294,7 +245,7 @@ vol-inspect:
 			docker volume inspect $$vol; \
 			echo ""; \
 		else \
-			echo "$(RED)Volume '$$vol' does not exist.$(RESET)"; \
+			echo "Volume $(BOLD)'$$vol'$(RESET) does not exist."; \
 		fi; \
 	done
 
@@ -306,7 +257,7 @@ vol-backup:
 			echo "Backing up '$$vol' to '$(BACKUP_FOLDER)/$$vol.tar.gz'"; \
 			docker run --rm -v $$vol:/data -v $$(pwd)/$(BACKUP_FOLDER):/backup alpine sh -c "cd /data && tar czf /backup/$$vol.tar.gz ."; \
 		else \
-			echo "$(RED)Volume '$$vol' does not exist.$(RESET)"; \
+			echo "Volume $(BOLD)'$$vol'$(RESET) does not exist."; \
 		fi; \
 	done
 
@@ -346,7 +297,7 @@ build-fe: check-env install-fe
 
 # -- RUN TARGETS (PROD MODE) --
 
-run: stop-dev build
+run: stop-proc build
 	@echo "$(BOLD)$(YELLOW)--- Running Build...$(RESET)"
 	pnpm -r --parallel run start
 
@@ -371,7 +322,7 @@ start: check-env
 	@echo "•   View app:       '$(YELLOW)https://localhost:$(HTTPS_PORT)$(RESET)' / '$(YELLOW)http://localhost:$(HTTP_PORT)$(RESET)'"
 
 # Stops production services via Docker Compose
-stop: check-env
+stop:
 	@echo "$(BOLD)$(YELLOW)--- Stopping production services...$(RESET)"
 	$(DC) down
 	@echo "$(BOLD)$(GREEN)Production services stopped.$(RESET)"
@@ -382,9 +333,9 @@ stop: check-env
 
 .PHONY:	all \
 		init-env install install-fe install-be check-env \
-		clean clean-db clean-backup kill-ports purge\
+		clean clean-db clean-backup kill-ports stop-proc purge\
 		typecheck lint lint-fix format logs \
-		dev dev-be dev-fe stop-dev \
+		dev dev-be dev-fe \
 		db seed-db view-db stop-db \
 		vol-ls vol-inspect vol-backup vol-restore \
 		build build-be build-fe run run-be run-fe \

@@ -17,8 +17,7 @@ node_modules
 .env*
 
 # DO NOT ignore these env files
-!.env.config
-!.env.secrets.example
+!.env.example
 
 # =====================
 # Logs
