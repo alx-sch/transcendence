@@ -1,37 +1,60 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { Event, Prisma } from '@generated/client/client';
+import { ReqEventGetPublishedDto, ReqEventCreateDraftDto } from './event.schema';
 
 @Injectable()
 export class EventService {
   constructor(private prisma: PrismaService) {}
 
-  async event(eventWhereUniqueInput: Prisma.EventWhereUniqueInput): Promise<Event | null> {
-    return this.prisma.event.findUnique({
-      where: eventWhereUniqueInput,
-    });
-  }
-
-  async events(params: {
-    skip?: number;
-    take?: number;
-    cursor?: Prisma.EventWhereUniqueInput;
-    where?: Prisma.EventWhereInput;
-    orderBy?: Prisma.EventOrderByWithRelationInput;
-  }): Promise<Event[]> {
-    const { skip, take, cursor, where, orderBy } = params;
+  eventGetPublished(input: ReqEventGetPublishedDto) {
+    const where: Prisma.EventWhereInput = {
+      isPublished: true,
+    };
+    if (input.search) {
+      where.OR = [{ title: { contains: input.search } }, { content: { contains: input.search } }];
+    }
+    if (input.authorId) {
+      where.authorId = input.authorId;
+    }
+    if (input.startFrom) {
+      where.startAt = { gte: input.startFrom };
+    }
+    if (input.startUntil) {
+      where.startAt = { lte: input.startUntil };
+    }
     return this.prisma.event.findMany({
-      skip,
-      take,
-      cursor,
       where,
-      orderBy,
+      include: {
+        author: true,
+      },
     });
   }
 
-  async createEvent(data: Prisma.EventCreateInput): Promise<Event> {
+  async eventGetById(id: number) {
+    const event = await this.prisma.event.findUnique({
+      where: { id },
+      include: { author: true },
+    });
+    if (!event) {
+      throw new NotFoundException(`Event with id ${id} not found`);
+    }
+    return event;
+  }
+
+  eventCreateDraft(data: ReqEventCreateDraftDto) {
     return this.prisma.event.create({
-      data,
+      data: {
+        title: data.title,
+        content: data.content,
+        startAt: data.startAt,
+        endAt: data.endAt,
+        isPublic: data.isPublic,
+        isPublished: false,
+        author: {
+          connect: { id: data.authorId },
+        },
+      },
     });
   }
 
