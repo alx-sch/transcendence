@@ -11,18 +11,33 @@ const ResEventAuthorSchema = z.object({
   name: z.string(),
 });
 
+
+/**
+ * VARIABLES
+ */
+const zId = z.number().int().positive();
+const zAuthorId = z.number().int().positive();
+const zAuthor = ResEventAuthorSchema.nullable();
+const zContent = z.string().optional();
+const zCreatedAt = z.date();
+const zEndAt = z.iso.datetime();
+const zIsPublished = z.boolean();
+const zIsPublic =  z.boolean();
+const zStartAt = z.iso.datetime();
+const zTitle = z.string();
+
 // Response schema for the basic information we send regarding events
 export const ResEventBaseSchema = z.object({
-  id: z.number().int().positive(),
-  authorId: z.number().int().positive().nullable(),
-  author: ResEventAuthorSchema.nullable(),
-  content: z.string().nullable(),
-  createdAt: z.date(),
-  endAt: z.date().nullable(),
-  isPublished: z.boolean(),
-  isPublic: z.boolean(),
-  startAt: z.date().nullable(),
-  title: z.string(),
+  id: zId,
+  authorId: zAuthorId,
+  author: zAuthor,
+  content: zContent,
+  createdAt: zCreatedAt,
+  endAt: zEndAt,
+  isPublished: zIsPublished,
+  isPublic: zIsPublic,
+  startAt: zStartAt,
+  title: zTitle,
 });
 
 /**
@@ -67,24 +82,24 @@ export const ResEventGetPublishedSchema = z.array(ResEventBaseSchema);
 
 // Patch an event (Update)
 export const ReqEventPatchSchema = z.strictObject({
-  content: z.string().optional(),
-  endAt: z.iso.datetime().optional(),
-  isPublic: z.boolean().optional(),
-  isPublished: z.boolean().optional(),
-  startAt: z.iso.datetime().optional(),
-  title: z.string().optional(),
+  content: zContent,
+  endAt: zEndAt,
+  isPublic: zIsPublic,
+  isPublished: zIsPublished,
+  startAt: zStartAt,
+  title: zTitle,
 });
 export class ReqEventPatchDto extends createZodDto(ReqEventPatchSchema) {}
 export const ResEventPatchSchema = ResEventBaseSchema;
 
 // Post a new event draft
 export const ReqEventPostDraftSchema = z.strictObject({
-  authorId: z.number().int().positive(),
-  content: z.string().optional(),
-  endAt: z.iso.datetime(),
-  isPublic: z.boolean(),
-  startAt: z.iso.datetime(),
-  title: z.string(),
+  authorId: zAuthorId,
+  content: zContent,
+  endAt: zEndAt,
+  isPublic: zIsPublic,
+  startAt: zStartAt,
+  title: zTitle,
 });
 export class ReqEventPostDraftDto extends createZodDto(ReqEventPostDraftSchema) {}
 export const ResEventPostDraftSchema = ResEventBaseSchema;
