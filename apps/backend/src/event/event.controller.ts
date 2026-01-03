@@ -1,72 +1,55 @@
-import { Controller, Get, Param, Post, Body, Put, Delete, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { EventService } from './event.service';
-import { Event as EventModel } from '@generated/client/client';
+import {
+  ReqEventDeleteDto,
+  ReqEventGetByIdDto,
+  ReqEventGetPublishedDto,
+  ReqEventPatchDto,
+  ReqEventPostDraftDto,
+  ResEventDeleteSchema,
+  ResEventGetByIdSchema,
+  ResEventGetPublishedSchema,
+  ResEventPatchSchema,
+  ResEventPostDraftSchema,
+} from './event.schema';
+import { ZodSerializerDto } from 'nestjs-zod';
 
 @Controller('events')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
-  @Get(':id')
-  async getEventById(@Param('id') id: string): Promise<EventModel | null> {
-    return this.eventService.event({ id: Number(id) });
-  }
-
-  /*
-   The endpoints 'events' can deal as a search endpoint if the query string contains
-   a search parameter e.g. /events?search=world
-  */
-  @Get()
-  async getEvents(@Query('search') search?: string): Promise<EventModel[]> {
-    if (search) return this.searchPublishedEvents(search);
-    return this.getPublishedEvents();
-  }
-
-  private async getPublishedEvents(): Promise<EventModel[]> {
-    return this.eventService.events({
-      where: { published: true },
-    });
-  }
-
-  private async searchPublishedEvents(searchString: string): Promise<EventModel[]> {
-    return this.eventService.events({
-      where: {
-        OR: [
-          {
-            title: { contains: searchString },
-          },
-          {
-            content: { contains: searchString },
-          },
-        ],
-        AND: { published: true },
-      },
-    });
-  }
-
-  @Post()
-  async createDraft(
-    @Body() eventData: { title: string; content?: string; authorEmail: string }
-  ): Promise<EventModel> {
-    const { title, content, authorEmail } = eventData;
-    return this.eventService.createEvent({
-      title,
-      content,
-      author: {
-        connect: { email: authorEmail },
-      },
-    });
-  }
-
-  @Put(':id/publish')
-  async publishEvent(@Param('id') id: string): Promise<EventModel> {
-    return this.eventService.updateEvent({
-      where: { id: Number(id) },
-      data: { published: true },
-    });
-  }
-
+  // Delete an event
   @Delete(':id')
-  async deleteEvent(@Param('id') id: string): Promise<EventModel> {
-    return this.eventService.deleteEvent({ id: Number(id) });
+  @ZodSerializerDto(ResEventDeleteSchema)
+  eventDelete(@Param() param: ReqEventDeleteDto) {
+    return this.eventService.eventDelete({ id: param.id });
+  }
+
+  // Get an individual event by id
+  @Get(':id')
+  @ZodSerializerDto(ResEventGetByIdSchema)
+  eventGetById(@Param() param: ReqEventGetByIdDto) {
+    return this.eventService.eventGetById(param.id);
+  }
+
+  // Get all published events or search published events
+  @Get()
+  @ZodSerializerDto(ResEventGetPublishedSchema)
+  eventGetPublished(@Query() query: ReqEventGetPublishedDto) {
+    return this.eventService.eventGetPublished(query);
+  }
+
+  // Patch an event (Update)
+  @Patch(':id')
+  @ZodSerializerDto(ResEventPatchSchema)
+  eventPatch(@Body() data: ReqEventPatchDto, @Param() param: ReqEventGetByIdDto) {
+    return this.eventService.eventPatch(param.id, data);
+  }
+
+  // Post a new event draft
+  @Post()
+  @ZodSerializerDto(ResEventPostDraftSchema)
+  eventCreateDraft(@Body() data: ReqEventPostDraftDto) {
+    return this.eventService.eventPostDraft(data);
   }
 }

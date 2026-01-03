@@ -1,13 +1,22 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import { ReqUserPostDto } from './user.schema';
+import { ResUserPostSchema, ResUserGetAllSchema } from './user.schema';
 import { UserService } from './user.service';
-import { User as UserModel } from '@generated/client/client';
+import { ZodSerializerDto } from 'nestjs-zod';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Get()
+  @ZodSerializerDto(ResUserGetAllSchema)
+  userGetAll() {
+    return this.userService.userGet();
+  }
+
   @Post()
-  async signupUser(@Body() userData: { name?: string; email: string }): Promise<UserModel> {
-    return this.userService.createUser(userData);
+  @ZodSerializerDto(ResUserPostSchema)
+  userPost(@Body() data: ReqUserPostDto) {
+    return this.userService.userPost(data);
   }
 }
